@@ -90,11 +90,13 @@ func getRepository(dir string) (*TRepository, error) {
 
 		sshregexres := sshregex.FindAllStringSubmatch(remoteurl[0], -1)
 		if sshregexres != nil {
+			
+			fmt.Println(sshregexres[0])
 			return &TRepository{
-				name:    "",
+				name:    sshregexres[0][3],
 				desc:    "",
-				author:  sshregexres[0][1],
-				url:     sshregexres[0][2],
+				author:  sshregexres[0][2],
+				url:     sshregexres[0][0],
 				api_url: ""}, nil
 
 		}
@@ -102,17 +104,17 @@ func getRepository(dir string) (*TRepository, error) {
 		httpregexres := httpregex.FindAllStringSubmatch(remoteurl[0], -1)
 		if httpregexres != nil {
 			return &TRepository{
-				name:    "",
+				name:    httpregexres[0][3],
 				desc:    "",
-				author:  httpregexres[0][1],
-				url:     httpregexres[0][2],
+				author:  httpregexres[0][2],
+				url:     httpregexres[0][0],
 				api_url: ""}, nil
 		}
 
-		fmt.Println(remoteurl[0])
+
 	}
 
-	return nil, &errRepoLimit{"No git repository found"}
+	return nil, &errRepoLimit{"This git repository doesn't have a remote"}
 }
 
 func main() {
@@ -151,8 +153,16 @@ func main() {
 		return
 	}
 
-	fmt.Println(repo.url)
+	/* Get the github information.
+         * TODO: support gitlab, bitbucket...
+         */
+	var r TGitHubRepo
+	_, err = r.Initialize(repo)
+	if err != nil {
+		panic(err)
+	}
 
+	fmt.Println(repo)
 }
 
 func _printHelp(args []string) {

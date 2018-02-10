@@ -38,9 +38,10 @@ type TRepoHost interface {
 	 * This is used to setup the URLs related to that repo
 	 *
 	 * Return nil on success, together with the 'api_url' string.
+	 * It needs to fill all fields of the 'repo' structure
 	 * Returns an error object on error
 	 */
-	Initialize(repo TRepository) (string, error)
+	Initialize(repo *TRepository) (string, error)
 
 	/* Download all issues from the repository */
 	DownloadAllIssues() ([]TIssue, error)
