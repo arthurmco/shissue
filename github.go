@@ -28,6 +28,16 @@ type TGitHubRepo struct {
 	Issue_comment_url string
 }
 
+
+type errGithubRepo struct {
+	err string
+}
+
+func (e *errGithubRepo) Error() string {
+	return e.err
+}
+
+
 func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 
 	// We need to get the api URL from the repository URL
@@ -40,10 +50,14 @@ func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 	api_url := "https://api.github.com/repos/" + username + "/" + reponame
 
 	// Now we need to download this.
-	resp, err := http.Get("https://api.github.com/repos/arthurmco/clinancial")
+	resp, err := http.Get(api_url)
 
 	if err != nil {
 		return "", err
+	}
+
+	if resp.StatusCode == 404 {
+		return "", &errGithubRepo{"Repository not found!"}
 	}
 
 	defer resp.Body.Close()
