@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
+	"strings"
 )
 
 /**
@@ -12,7 +14,13 @@ import (
  * Copyright (C) 2018 Arthur M
  */
 
-type TGitHubOwner struct {
+/* Structures that represent the used fields from the JSON returned by the
+ * Github API.
+ *
+ * TGitHubOwner is the repository owner information
+ * TGitHubRepo is the repository information
+ */
+type TGitHubUser struct {
 	Login string
 	ID    uint
 }
@@ -21,13 +29,26 @@ type TGitHubRepo struct {
 	ID          uint
 	Name        string
 	Full_name   string
-	Owner       TGitHubOwner
+	Owner       TGitHubUser
 	Description string
 
 	Issues_url        string
 	Issue_comment_url string
+
+	Has_issues bool
 }
 
+type TGitHubIssue struct {
+	ID         uint
+	Number     uint
+	Title      string
+	User       TGitHubUser
+	Assignees  []TGitHubUser
+	Html_url   string
+	State      string
+	Created_at time.Time
+	Body       string
+}
 
 type errGithubRepo struct {
 	err string
@@ -36,7 +57,6 @@ type errGithubRepo struct {
 func (e *errGithubRepo) Error() string {
 	return e.err
 }
-
 
 func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 
@@ -63,15 +83,55 @@ func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	var ghrepo TGitHubRepo
-	err = json.Unmarshal(body, &ghrepo)
+	err = json.Unmarshal(body, gh)
 	if err != nil {
 		return "", err
 	}
 
-	repo.name = ghrepo.Name
-	repo.desc = ghrepo.Description
+	repo.name = gh.Name
+	repo.desc = gh.Description
 
 	return api_url, nil
 
+}
+
+/*
+ * Download all issues from this github repository
+ */
+func (gh *TGitHubRepo) DownloadAllIssues() ([]TIssue, error) {
+	if !gh.Has_issues {
+		// Return a nil list, since this repository doesn't has issues
+		// Return no errors too, since no error has been found
+		return nil, nil
+	}
+	
+	issue_url := strings.Replace(gh.Issues_url, "{/number}", "", 1)
+
+	resp, err := http.Get(issue_url)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	var ghissues []TGitHubIssue
+	err = json.Unmarshal(body, &ghissues)
+	if err != nil {
+		return nil, err
+	}
+
+	issues := make([]TIssue, len(ghissues))
+
+	for idx, ghissue := range ghissues {
+		issues[idx].id = ghissue.ID
+		issues[idx].number = ghissue.Number
+		issues[idx].name = ghissue.Title
+		issues[idx].url = ghissue.Html_url
+		issues[idx].author = ghissue.User.Login
+		issues[idx].creation = ghissue.Created_at
+		issues[idx].content = ghissue.Body
+	}
+
+	return issues, nil
 }

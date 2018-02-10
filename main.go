@@ -62,7 +62,7 @@ func getRepository(dir string) (*TRepository, error) {
 		if err.Error() == "exit status 128" {
 			return nil, &errRepoLimit{"No git repository found even in root directory"}
 		}
-		
+
 		return nil, err
 	}
 
@@ -90,7 +90,7 @@ func getRepository(dir string) (*TRepository, error) {
 
 		sshregexres := sshregex.FindAllStringSubmatch(remoteurl[0], -1)
 		if sshregexres != nil {
-			
+
 			fmt.Println(sshregexres[0])
 			return &TRepository{
 				name:    sshregexres[0][3],
@@ -110,7 +110,6 @@ func getRepository(dir string) (*TRepository, error) {
 				url:     httpregexres[0][0],
 				api_url: ""}, nil
 		}
-
 
 	}
 
@@ -154,15 +153,43 @@ func main() {
 	}
 
 	/* Get the github information.
-         * TODO: support gitlab, bitbucket...
-         */
+	 * TODO: support gitlab, bitbucket...
+	 */
 	var r TGitHubRepo
 	_, err = r.Initialize(repo)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(repo)
+	issues, err := r.DownloadAllIssues()
+	if err != nil {
+		panic(err)
+	}
+
+	fnBold := func(s string) string {
+		return "\033[37;1m" + s + "\033[0m"
+	}
+
+	fnBoldYellow := func(s string) string {
+		return "\033[33;1m" + s + "\033[0m"
+	}
+
+	fnBoldBlue := func(s string) string {
+		return "\033[36;1m" + s + "\033[0m"
+	}
+
+	for _, issue := range issues {
+		fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
+			issue.number, issue.name)
+		fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" on %v\n",
+			issue.author, issue.creation)
+		fmt.Println("\tView it online: " + issue.url)
+		fmt.Println()
+		fmt.Println(issue.content)
+		fmt.Println()
+		fmt.Println("________________________________________________")
+		fmt.Println()
+	}
 }
 
 func _printHelp(args []string) {

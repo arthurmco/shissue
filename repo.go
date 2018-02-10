@@ -20,12 +20,18 @@ type TRepository struct {
 
 	url string // Repository external URL
 
-	api_url string // Repository 'api' URL
+	api_url string     // Repository 'api' URL
+	host    *TRepoHost // Pointer to the repository host
 }
 
 type TIssue struct {
-	id       uint      // Issue ID
+	// Issue ID, in the repository host API
+	//	(only meaningful to the repohost interface)
+	id uint
+
+	number   uint      // Issue number
 	name     string    // Issue name
+	url      string    // Issue URL, to view it online
 	author   string    // Issue author
 	creation time.Time // Issue creation date
 
@@ -43,7 +49,11 @@ type TRepoHost interface {
 	 */
 	Initialize(repo *TRepository) (string, error)
 
-	/* Download all issues from the repository */
+	/* Download all issues from the repository
+	 * Return nil on the issue list and on the error if no issues exist.
+	 * Return an issue list on success, or nil on issue list and an error
+	 * on error
+	 */
 	DownloadAllIssues() ([]TIssue, error)
 
 	/* Download an specific issue range by ID, including the
