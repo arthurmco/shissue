@@ -127,7 +127,7 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication) (*http
 	client := http.Client{}
 
 	// Build the request, and then do it
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url + "?per_page=1000", nil)
 	if err != nil {
 		return nil, err
 	}
