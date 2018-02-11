@@ -98,6 +98,13 @@ https://github.com/search?utf8=%E2%9C%93&q=shissue&type=
 
 Compare. :wink:
 
+# Images
+
+Everybody likes nice images, so...
+
+![shissue @ node.js](https://i.imgur.com/Ui5uYmZ.png "shissue listing node.js open issues")
+![shissue @ ourselves](https://i.imgur.com/0K5udPt.png "shissue listing our own issues")
+
 ## Licensing
 
 Everything inside here is under the MIT license
