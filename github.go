@@ -80,6 +80,14 @@ func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 		return "", &errGithubRepo{"Repository not found!"}
 	}
 
+	if resp.StatusCode == 403 {
+		if resp.Header.Get("X-RateLimit-Remaining") == "0" {
+			return "", &errGithubRepo{"Github API rate limit exceeded"}
+		} else {
+			return "", &errGithubRepo{"Permission error!"}
+		}
+	}
+
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
