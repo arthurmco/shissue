@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
 	"strings"
+	"time"
 )
 
 /**
@@ -104,7 +104,7 @@ func (gh *TGitHubRepo) DownloadAllIssues() ([]TIssue, error) {
 		// Return no errors too, since no error has been found
 		return nil, nil
 	}
-	
+
 	issue_url := strings.Replace(gh.Issues_url, "{/number}", "", 1)
 
 	resp, err := http.Get(issue_url)

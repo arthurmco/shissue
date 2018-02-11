@@ -69,8 +69,8 @@ func getRepository(dir string) (*TRepository, error) {
 	// Regexes to discover if we have a git or an ssh repository
 	// Doing this here so we don't be bothered to recompile again on
 	// every loop iteration
-	sshregex := regexp.MustCompile("git@(.*):(.*)/(.*).git")
-	httpregex := regexp.MustCompile("https://(.*)/(.*)/(.*)")
+	sshregex := regexp.MustCompile(`git@(.*):(.*)/(.*)`)
+	httpregex := regexp.MustCompile(`https://(.*)/(.*)/(.*)`)
 
 	out := string(bout[:len(bout)])
 	lines := strings.Split(strings.Trim(out, "\n\t "), "\n")
@@ -90,10 +90,9 @@ func getRepository(dir string) (*TRepository, error) {
 
 		sshregexres := sshregex.FindAllStringSubmatch(remoteurl[0], -1)
 		if sshregexres != nil {
-
 			fmt.Println(sshregexres[0])
 			return &TRepository{
-				name:    sshregexres[0][3],
+				name:    strings.Replace(sshregexres[0][3], ".git", "", -1),
 				desc:    "",
 				author:  sshregexres[0][2],
 				url:     sshregexres[0][0],
@@ -103,8 +102,9 @@ func getRepository(dir string) (*TRepository, error) {
 
 		httpregexres := httpregex.FindAllStringSubmatch(remoteurl[0], -1)
 		if httpregexres != nil {
+			// fuck regexes
 			return &TRepository{
-				name:    httpregexres[0][3],
+				name:    strings.Replace(httpregexres[0][3], ".git", "", -1),
 				desc:    "",
 				author:  httpregexres[0][2],
 				url:     httpregexres[0][0],
