@@ -179,7 +179,9 @@ func _printIssues(ad ArgumentData, args []string) {
 		// number to a 256-color compatible one
 		cR, cG, cB := r/51, g/51, b/51
 
-		if cR >= 3 || cG >= 3 || cB >= 3 {
+		
+		
+		if cR + uint8(float32(cG)*2.5) + cB > 9 {
 			s = "\033[30m" + s
 		}
 
