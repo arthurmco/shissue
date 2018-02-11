@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
-	"strconv"
 )
 
 /**
@@ -52,10 +52,10 @@ type TGitHubIssue struct {
 }
 
 type TGitHubIssueComment struct {
-	ID uint
-	Html_url string
-	Body string
-	User TGitHubUser
+	ID         uint
+	Html_url   string
+	Body       string
+	User       TGitHubUser
 	Created_at time.Time
 }
 
@@ -239,4 +239,3 @@ func (gh *TGitHubRepo) DownloadIssueComments(issue_id uint) ([]TIssueComment, er
 
 	return comments, nil
 }
-
