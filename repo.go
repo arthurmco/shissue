@@ -36,7 +36,7 @@ type TRepository struct {
 type TIssueLabel struct {
 	name string // Issue label name
 
-	colorR, colorG, colorB int8 // Color data, only for decoration
+	colorR, colorG, colorB uint8 // Color data, only for decoration
 }
 
 /* The issue itself */
@@ -45,16 +45,16 @@ type TIssue struct {
 	//	(only meaningful to the repohost interface)
 	id uint
 
-	number   uint      // Issue number
-	name     string    // Issue name
-	url      string    // Issue URL, to view it online
-	author   string    // Issue author
-	assignees []string   // People assigned with the issue
-	
+	number    uint          // Issue number
+	name      string        // Issue name
+	url       string        // Issue URL, to view it online
+	author    string        // Issue author
+	assignees []string      // People assigned with the issue
+	labels    []TIssueLabel // Issue labels
+
 	creation time.Time // Issue creation date
 
-	content string // Issue content
-	labels TIssueLabel // Issue label
+	content string      // Issue content
 }
 
 /* Issue comment.

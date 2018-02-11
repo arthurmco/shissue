@@ -39,6 +39,12 @@ type TGitHubRepo struct {
 	Has_issues bool
 }
 
+type TGitHubIssueLabel struct {
+	ID    uint
+	Name  string
+	Color string
+}
+
 type TGitHubIssue struct {
 	ID         uint
 	Number     uint
@@ -49,6 +55,7 @@ type TGitHubIssue struct {
 	State      string
 	Created_at time.Time
 	Body       string
+	Labels     []TGitHubIssueLabel
 }
 
 type TGitHubIssueComment struct {
@@ -112,14 +119,13 @@ func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 
 }
 
-
-/* Build and send a common GET request to the API. 
+/* Build and send a common GET request to the API.
  * Return the response object on success, or an error.
  */
 func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication) (*http.Response, error) {
 
 	client := http.Client{}
-	
+
 	// Build the request, and then do it
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -129,8 +135,8 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication) (*http
 	// Only send authorization data when we have an username
 	if auth != nil && auth.username != "" {
 		req.SetBasicAuth(auth.username, auth.password)
-	} 
-	
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -161,7 +167,7 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication) ([]TIssue, error
 	}
 
 	issue_url := strings.Replace(gh.Issues_url, "{/number}", "", 1)
-	
+
 	resp, err := gh.buildGetRequest(issue_url, auth)
 	if err != nil {
 		return nil, err
@@ -191,7 +197,22 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication) ([]TIssue, error
 			assignees = append(assignees, assignee.Login)
 		}
 		issues[idx].assignees = assignees
-		
+
+		labels := make([]TIssueLabel, 0)
+		for _, ghlabel := range ghissue.Labels {
+			colorR, _ := strconv.ParseUint(ghlabel.Color[0:2], 16, 8)
+			colorG, _ := strconv.ParseUint(ghlabel.Color[2:4], 16, 8)
+			colorB, _ := strconv.ParseUint(ghlabel.Color[4:6], 16, 8)
+
+			labels = append(labels, TIssueLabel{
+				name:   ghlabel.Name,
+				colorR: uint8(colorR),
+				colorG: uint8(colorG),
+				colorB: uint8(colorB),
+			})
+		}
+		issues[idx].labels = labels
+
 		issues[idx].creation = ghissue.Created_at
 		issues[idx].content = ghissue.Body
 	}
@@ -243,7 +264,22 @@ func (gh *TGitHubRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 		assignees = append(assignees, assignee.Login)
 	}
 	issue.assignees = assignees
-	
+
+	labels := make([]TIssueLabel, 0)
+	for _, ghlabel := range ghissue.Labels {
+		colorR, _ := strconv.ParseUint(ghlabel.Color[0:2], 16, 8)
+		colorG, _ := strconv.ParseUint(ghlabel.Color[2:4], 16, 8)
+		colorB, _ := strconv.ParseUint(ghlabel.Color[4:6], 16, 8)
+
+		labels = append(labels, TIssueLabel{
+			name:   ghlabel.Name,
+			colorR: uint8(colorR),
+			colorG: uint8(colorG),
+			colorB: uint8(colorB),
+		})
+	}
+	issue.labels = labels
+
 	issue.creation = ghissue.Created_at
 	issue.content = ghissue.Body
 

@@ -169,6 +169,27 @@ func _printIssues(ad ArgumentData, args []string) {
 		return "\033[36;1m" + s + "\033[0m"
 	}
 
+	// Write the string 's' with a background color 'r','g','b'
+	// It will convert the color to a 256-color compatible one for printing
+	// to the terminal
+	// TODO: Check if 256 color is supported
+	// TODO: Print directly to the 24-bit color if supported
+	fnPrintBackColor := func(s string, r, g, b uint8) string {
+		// (255 / 51 = 5, the number we have to limit it to convert the
+		// number to a 256-color compatible one
+		cR, cG, cB := r/51, g/51, b/51
+
+		if cR >= 3 || cG >= 3 || cB >= 3 {
+			s = "\033[30m" + s
+		}
+
+		// taken from https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
+		cColorNum := 16 + 36*cR + 6*cG + cB
+
+		return "\033[48;5;" + strconv.Itoa(int(cColorNum)) +
+			"m" + s + "\033[0m"
+	}
+
 	// If arg is a number, it might be the issue number
 	if len(args) > 1 {
 		if issuen, err := strconv.ParseUint(args[1], 10, 64); err == nil {
@@ -181,8 +202,15 @@ func _printIssues(ad ArgumentData, args []string) {
 				panic("No issue found with that number")
 			}
 
-			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
-				issue.number, issue.name)
+			slabels := ""
+			for _, label := range issue.labels {
+				slabels = slabels + " " + fnPrintBackColor(
+					" "+label.name+" ",
+					label.colorR, label.colorG, label.colorB)
+			}
+
+			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+" %s\n",
+				issue.number, issue.name, slabels)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
 				issue.author, issue.creation)
 
@@ -229,8 +257,16 @@ func _printIssues(ad ArgumentData, args []string) {
 
 	for _, issue := range issues {
 		if printMode == "long" || printMode == "full" {
-			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
-				issue.number, issue.name)
+
+			slabels := ""
+			for _, label := range issue.labels {
+				slabels = slabels + " " + fnPrintBackColor(
+					" "+label.name+" ",
+					label.colorR, label.colorG, label.colorB)
+			}
+			
+			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+" %s\n",
+				issue.number, issue.name, slabels)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
 				issue.author, issue.creation)
 
