@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"strconv"
 )
 
 /**
@@ -48,6 +49,14 @@ type TGitHubIssue struct {
 	State      string
 	Created_at time.Time
 	Body       string
+}
+
+type TGitHubIssueComment struct {
+	ID uint
+	Html_url string
+	Body string
+	User TGitHubUser
+	Created_at time.Time
 }
 
 type errGithubRepo struct {
@@ -143,3 +152,91 @@ func (gh *TGitHubRepo) DownloadAllIssues() ([]TIssue, error) {
 
 	return issues, nil
 }
+
+/*
+ * Download an specific issue from this github repository
+ */
+func (gh *TGitHubRepo) DownloadIssue(id uint) (*TIssue, error) {
+	if !gh.Has_issues {
+		// Return a nil list, since this repository doesn't has issues
+		// Return no errors too, since no error has been found
+		return nil, nil
+	}
+
+	issue_url := strings.Replace(gh.Issues_url, "{/number}",
+		"/"+strconv.Itoa(int(id)), 1)
+
+	resp, err := http.Get(issue_url)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == 404 {
+		return nil, nil
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	var ghissue TGitHubIssue
+	err = json.Unmarshal(body, &ghissue)
+	if err != nil {
+		return nil, err
+	}
+
+	issue := new(TIssue)
+
+	issue.id = ghissue.ID
+	issue.number = ghissue.Number
+	issue.name = ghissue.Title
+	issue.url = ghissue.Html_url
+	issue.author = ghissue.User.Login
+	issue.creation = ghissue.Created_at
+	issue.content = ghissue.Body
+
+	return issue, nil
+}
+
+/* Download all comments from that issue */
+func (gh *TGitHubRepo) DownloadIssueComments(issue_id uint) ([]TIssueComment, error) {
+	
+	if !gh.Has_issues {
+		// Return a nil list, since this repository doesn't has issues
+		// Return no errors too, since no error has been found
+		return nil, nil
+	}
+
+	comment_url := strings.Replace(gh.Issues_url, "{/number}",
+		"/"+strconv.Itoa(int(issue_id))+"/comments", 1)
+
+	resp, err := http.Get(comment_url)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == 404 {
+		return nil, nil
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	var ghcomments []TGitHubIssueComment
+	err = json.Unmarshal(body, &ghcomments)
+	if err != nil {
+		return nil, err
+	}
+
+	comments := make([]TIssueComment, len(ghcomments))
+
+	for idx, ghissue := range ghcomments {
+		comments[idx].id = ghissue.ID
+		comments[idx].url = ghissue.Html_url
+		comments[idx].author = ghissue.User.Login
+		comments[idx].creation = ghissue.Created_at
+		comments[idx].content = ghissue.Body
+	}
+
+	return comments, nil
+}
+

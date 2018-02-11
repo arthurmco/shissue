@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"strconv"
 )
 
 /**
@@ -184,10 +185,6 @@ func _printIssues(args []string) {
 
 	
 	r := getRepositoryHost()
-	issues, err := r.DownloadAllIssues()
-	if err != nil {
-		panic(err)
-	}
 
 	fnBold := func(s string) string {
 		return "\033[37;1m" + s + "\033[0m"
@@ -205,11 +202,62 @@ func _printIssues(args []string) {
 		return "\033[36;1m" + s + "\033[0m"
 	}
 
+	// If arg is a number, it might be the issue number
+	if len(args) > 1 {
+		if issuen, err := strconv.ParseUint(args[1], 10, 64); err == nil {
+			issue, err := r.DownloadIssue(uint(issuen))
+			if err != nil {
+				panic(err)
+			}
+
+			if issue == nil {
+				panic("No issue found with that number")
+			}
+
+			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
+				issue.number, issue.name)
+			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
+				issue.author, issue.creation)
+			fmt.Println("\tView it online: " + issue.url)
+			fmt.Println()
+			fmt.Println(issue.content)
+			fmt.Println()
+
+			icomments, err := r.DownloadIssueComments(uint(issuen))
+			if err != nil {
+				panic(err)
+			}
+
+			for _, comment := range icomments {
+				fmt.Printf("\t\t comment by "+
+					fnYellow("%s")+" in %v\n",
+					comment.author, comment.creation)
+
+				contentlines := strings.Split(comment.content, "\n")
+
+				for _, cline := range contentlines {
+					fmt.Println("\t\t\t"+cline)
+				}
+								
+				fmt.Println()				
+			}
+			
+			return
+		}
+	}
+
+	// If not, it might be the type. Download everybody, then!	
+	issues, err := r.DownloadAllIssues()
+	if err != nil {
+		panic(err)
+	}
+
+
 	for _, issue := range issues {
 		if printMode == "long" || printMode == "full" {		
 			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
 				issue.number, issue.name)
-			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" at %v\n",
+			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
 				issue.author, issue.creation)
 			fmt.Println("\tView it online: " + issue.url)
 			fmt.Println()
