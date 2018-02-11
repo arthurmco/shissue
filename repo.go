@@ -13,6 +13,15 @@ import (
 	"time"
 )
 
+/* Authentication data, for when you need your users permission
+ * Typically when you're modifying or adding something, like an issue
+ * Or when you're been rate-limited.
+ */
+type TAuthentication struct {
+	username string
+	password string
+}
+
 type TRepository struct {
 	name   string // Repository name
 	desc   string // Repository description
@@ -66,16 +75,20 @@ type TRepoHost interface {
 	Initialize(repo *TRepository) (string, error)
 
 	/* Download all issues from the repository
+	 * You can use the TAuthentication struct to pass authentication info
+	 * Send it nil for no authentication, but take note that the host
+	 * might not send everything to unauthenticated users
+	 *
 	 * Return nil on the issue list and on the error if no issues exist.
 	 * Return an issue list on success, or nil on issue list and an error
 	 * on error
 	 */
-	DownloadAllIssues() ([]TIssue, error)
+	DownloadAllIssues(auth *TAuthentication) ([]TIssue, error)
 
 	/* Download an specific issue by ID,
 	 */
-	DownloadIssue(id uint) (*TIssue, error)
+	DownloadIssue(auth *TAuthentication, id uint) (*TIssue, error)
 
 	/* Download all comments from that issue */
-	DownloadIssueComments(issue_id uint) ([]TIssueComment, error)
+	DownloadIssueComments(auth *TAuthentication, issue_id uint) ([]TIssueComment, error)
 }

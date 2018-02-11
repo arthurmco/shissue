@@ -112,10 +112,48 @@ func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 
 }
 
+
+/* Build and send a common GET request to the API. 
+ * Return the response object on success, or an error.
+ */
+func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication) (*http.Response, error) {
+
+	client := http.Client{}
+	
+	// Build the request, and then do it
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only send authorization data when we have an username
+	if auth != nil && auth.username != "" {
+		req.SetBasicAuth(auth.username, auth.password)
+	} 
+	
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == 401 {
+		return nil, &errGithubRepo{"Authentication failed: wrong username and/or password"}
+	}
+
+	return resp, nil
+}
+
 /*
  * Download all issues from this github repository
+ * You can use the TAuthentication struct to pass authentication info
+ * Send it nil for no authentication, but take note that the host
+ * might not send everything to unauthenticated users
+ *
+ * Return nil on the issue list and on the error if no issues exist.
+ * Return an issue list on success, or nil on issue list and an error
+ * on error
  */
-func (gh *TGitHubRepo) DownloadAllIssues() ([]TIssue, error) {
+func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication) ([]TIssue, error) {
 	if !gh.Has_issues {
 		// Return a nil list, since this repository doesn't has issues
 		// Return no errors too, since no error has been found
@@ -123,12 +161,13 @@ func (gh *TGitHubRepo) DownloadAllIssues() ([]TIssue, error) {
 	}
 
 	issue_url := strings.Replace(gh.Issues_url, "{/number}", "", 1)
-
-	resp, err := http.Get(issue_url)
+	
+	resp, err := gh.buildGetRequest(issue_url, auth)
 	if err != nil {
 		return nil, err
 	}
 
+	// Read the result and build the JSON
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
@@ -156,7 +195,7 @@ func (gh *TGitHubRepo) DownloadAllIssues() ([]TIssue, error) {
 /*
  * Download an specific issue from this github repository
  */
-func (gh *TGitHubRepo) DownloadIssue(id uint) (*TIssue, error) {
+func (gh *TGitHubRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, error) {
 	if !gh.Has_issues {
 		// Return a nil list, since this repository doesn't has issues
 		// Return no errors too, since no error has been found
@@ -166,7 +205,7 @@ func (gh *TGitHubRepo) DownloadIssue(id uint) (*TIssue, error) {
 	issue_url := strings.Replace(gh.Issues_url, "{/number}",
 		"/"+strconv.Itoa(int(id)), 1)
 
-	resp, err := http.Get(issue_url)
+	resp, err := gh.buildGetRequest(issue_url, auth)
 	if err != nil {
 		return nil, err
 	}
@@ -198,8 +237,8 @@ func (gh *TGitHubRepo) DownloadIssue(id uint) (*TIssue, error) {
 }
 
 /* Download all comments from that issue */
-func (gh *TGitHubRepo) DownloadIssueComments(issue_id uint) ([]TIssueComment, error) {
-	
+func (gh *TGitHubRepo) DownloadIssueComments(auth *TAuthentication, issue_id uint) ([]TIssueComment, error) {
+
 	if !gh.Has_issues {
 		// Return a nil list, since this repository doesn't has issues
 		// Return no errors too, since no error has been found
@@ -209,7 +248,7 @@ func (gh *TGitHubRepo) DownloadIssueComments(issue_id uint) ([]TIssueComment, er
 	comment_url := strings.Replace(gh.Issues_url, "{/number}",
 		"/"+strconv.Itoa(int(issue_id))+"/comments", 1)
 
-	resp, err := http.Get(comment_url)
+	resp, err := gh.buildGetRequest(comment_url, auth)
 	if err != nil {
 		return nil, err
 	}
