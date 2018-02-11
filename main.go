@@ -116,11 +116,42 @@ func getRepository(dir string) (*TRepository, error) {
 	return nil, &errRepoLimit{"This git repository doesn't have a remote"}
 }
 
+/* Gets the correct repository host, based in the remote data
+ * Panics if you can't get it, but it doesn't matter. You wouldn't be able to do
+ * nothing if it didn't fail...
+ */
+func getRepositoryHost() *TGitHubRepo {
+	/* Get an repository */
+	cwd, err := os.Getwd()
+	if err != nil {
+		panic("Error while getcwd()ing: " + err.Error() + "\n")
+	}
+
+	repo, err := getRepository(cwd)
+	if err != nil {
+		panic("Error while getting the repository: " + err.Error() + "\n")
+	}
+
+	/* Get the github information.
+	 * TODO: support gitlab, bitbucket...
+	 */
+	r := new(TGitHubRepo)
+	_, err = r.Initialize(repo)
+	if err != nil {
+		panic(err)
+	}
+
+	return r
+
+}
+
 func main() {
 
 	commands = append(commands,
 		CCommand{name: "help", desc: "Print this help text",
 			function: _printHelp},
+		CCommand{name: "issues", desc: "List repository issues",
+			function: _printIssues},
 	)
 
 	if len(os.Args) <= 1 {
@@ -138,29 +169,21 @@ func main() {
 	}
 
 	fmt.Println("No command named " + os.Args[1])
+}
 
-	/* Get an repository */
-	cwd, err := os.Getwd()
-	if err != nil {
-		os.Stderr.WriteString("Error while getcwd()ing: " + err.Error() + "\n")
-		return
+func _printHelp(args []string) {
+	printHelp()
+}
+
+
+func _printIssues(args []string) {
+	printMode := "long"
+	if len(args) > 1 {
+		printMode = args[1]
 	}
 
-	repo, err := getRepository(cwd)
-	if err != nil {
-		os.Stderr.WriteString("Error while getting the repository: " + err.Error() + "\n")
-		return
-	}
-
-	/* Get the github information.
-	 * TODO: support gitlab, bitbucket...
-	 */
-	var r TGitHubRepo
-	_, err = r.Initialize(repo)
-	if err != nil {
-		panic(err)
-	}
-
+	
+	r := getRepositoryHost()
 	issues, err := r.DownloadAllIssues()
 	if err != nil {
 		panic(err)
@@ -179,19 +202,25 @@ func main() {
 	}
 
 	for _, issue := range issues {
-		fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
-			issue.number, issue.name)
-		fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" on %v\n",
-			issue.author, issue.creation)
-		fmt.Println("\tView it online: " + issue.url)
-		fmt.Println()
-		fmt.Println(issue.content)
-		fmt.Println()
-		fmt.Println("________________________________________________")
-		fmt.Println()
+		if printMode == "long" || printMode == "full" {		
+			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
+				issue.number, issue.name)
+			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" on %v\n",
+				issue.author, issue.creation)
+			fmt.Println("\tView it online: " + issue.url)
+			fmt.Println()
+			fmt.Println(issue.content)
+			fmt.Println()
+			fmt.Println("________________________________________________")
+			fmt.Println()
+		} else if printMode == "oneline" || printMode == "short" {
+			fmt.Printf(" #"+fnBold("%d")+" "+fnBoldYellow("%s")+" by %s\n",
+				issue.number, issue.name, issue.author)
+		} else {
+			panic("Mode "+printMode+" is unknown. \n"+
+				"Try 'long' or 'full' for a complete detail of issues\n"+
+				"or try 'oneline' or 'short' for a simple listing, with only name and number")
+		}
 	}
-}
-
-func _printHelp(args []string) {
-	printHelp()
+	
 }
