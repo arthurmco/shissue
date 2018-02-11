@@ -50,6 +50,9 @@ managing git issue history?
  have a compatible remote.  
  For now, it only  supports Github public repos, but more will be added 
  over time (I *do* have  projects in other sites, too!). 
+ 
+ * You can specify only 'username'. If you do that, the software will ask for the 
+   password.
 
 ## What do we have?
 
@@ -68,7 +71,7 @@ Support for *everything* in this list is planned, so don't worry! :smile:
    - on Gitlab
    - on Bitbucket
    
- - Support for writing issues
+ - Support for editing issues
  - Support for viewing pull requests
  - Support for viewing issues' and PRs comments
  - Support for commenting on issues & PRs
