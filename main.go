@@ -2,7 +2,7 @@ package main
 
 /*
  *  Main file for shissue
- *  Copyright (C) 2018 Arthur Mendes
+ *  Copyright (C) 2018 Arthur M
  */
 
 import (
@@ -197,6 +197,10 @@ func _printIssues(args []string) {
 		return "\033[33;1m" + s + "\033[0m"
 	}
 
+	fnYellow := func(s string) string {
+		return "\033[33m" + s + "\033[0m"
+	}
+	
 	fnBoldBlue := func(s string) string {
 		return "\033[36;1m" + s + "\033[0m"
 	}
@@ -205,7 +209,7 @@ func _printIssues(args []string) {
 		if printMode == "long" || printMode == "full" {		
 			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+"\n",
 				issue.number, issue.name)
-			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" on %v\n",
+			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" at %v\n",
 				issue.author, issue.creation)
 			fmt.Println("\tView it online: " + issue.url)
 			fmt.Println()
@@ -214,7 +218,7 @@ func _printIssues(args []string) {
 			fmt.Println("________________________________________________")
 			fmt.Println()
 		} else if printMode == "oneline" || printMode == "short" {
-			fmt.Printf(" #"+fnBold("%d")+" "+fnBoldYellow("%s")+" by %s\n",
+			fmt.Printf(" #"+fnBold("%d")+" %s (by "+fnYellow("%s")+")\n",
 				issue.number, issue.name, issue.author)
 		} else {
 			panic("Mode "+printMode+" is unknown. \n"+
