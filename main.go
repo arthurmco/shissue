@@ -151,7 +151,7 @@ func _printIssues(ad ArgumentData, args []string) {
 		printMode = args[1]
 	}
 
-	r := getRepositoryHost()
+	r := getRepositoryHost(ad.auth)
 
 	fnBold := func(s string) string {
 		return "\033[37;1m" + s + "\033[0m"
@@ -317,7 +317,8 @@ func _printIssues(ad ArgumentData, args []string) {
 		} else {
 			panic("Mode " + printMode + " is unknown. \n" +
 				"Try 'long' or 'full' for a complete detail of issues\n" +
-				"or try 'oneline' or 'short' for a simple listing, with only name and number")
+				"or 'oneline' or 'short' for a simple listing, with only name and number\n" +
+			" or try issues <num> to see the issue of number <num>")
 		}
 	}
 

@@ -74,7 +74,7 @@ func (e *errGithubRepo) Error() string {
 	return e.err
 }
 
-func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
+func (gh *TGitHubRepo) Initialize(auth *TAuthentication, repo *TRepository) (string, error) {
 
 	// We need to get the api URL from the repository URL
 	// URL is https://github.com/arthurmco/clinancial
@@ -86,7 +86,7 @@ func (gh *TGitHubRepo) Initialize(repo *TRepository) (string, error) {
 	api_url := "https://api.github.com/repos/" + username + "/" + reponame
 
 	// Now we need to download this.
-	resp, err := http.Get(api_url)
+	resp, err := gh.buildGetRequest(api_url, auth)
 
 	if err != nil {
 		return "", err

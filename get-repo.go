@@ -90,10 +90,13 @@ func getRepository(dir string) (*TRepository, error) {
 }
 
 /* Gets the correct repository host, based in the remote data
+ * 'auth' is an authentication object, for the cases we need to authenticate
+ * to even see the repository (e.g private repos)
+ *
  * Panics if you can't get it, but it doesn't matter. You wouldn't be able to do
  * nothing if it didn't fail...
  */
-func getRepositoryHost() *TGitHubRepo {
+func getRepositoryHost(auth *TAuthentication) *TGitHubRepo {
 	/* Get an repository */
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -109,7 +112,7 @@ func getRepositoryHost() *TGitHubRepo {
 	 * TODO: support gitlab, bitbucket...
 	 */
 	r := new(TGitHubRepo)
-	_, err = r.Initialize(repo)
+	_, err = r.Initialize(auth, repo)
 	if err != nil {
 		panic(err)
 	}

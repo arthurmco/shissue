@@ -83,7 +83,7 @@ type TRepoHost interface {
 	 * It needs to fill all fields of the 'repo' structure
 	 * Returns an error object on error
 	 */
-	Initialize(repo *TRepository) (string, error)
+	Initialize(auth *TAuthentication, repo *TRepository) (string, error)
 
 	/* Download all issues from the repository
 	 * You can use the TAuthentication struct to pass authentication info
