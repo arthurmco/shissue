@@ -215,6 +215,7 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication) ([]TIssue, error
 
 		issues[idx].creation = ghissue.Created_at
 		issues[idx].content = ghissue.Body
+		issues[idx].is_closed = (ghissue.State == "closed")
 	}
 
 	return issues, nil
@@ -282,7 +283,8 @@ func (gh *TGitHubRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 
 	issue.creation = ghissue.Created_at
 	issue.content = ghissue.Body
-
+	issue.is_closed = (ghissue.State == "closed")
+	
 	return issue, nil
 }
 

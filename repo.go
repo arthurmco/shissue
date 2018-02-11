@@ -54,12 +54,14 @@ type TIssue struct {
 
 	creation time.Time // Issue creation date
 
-	content string      // Issue content
+	content string // Issue content
+
+	is_closed bool // Is the issue closed?
 }
 
 /* Issue comment.
- * They might be as important as the issue itself, because they contain additional info and made
- * decisions
+ * They might be as important as the issue itself, because they contain additional info and 
+ * decisions made that can change the issue meaning
  *
  * So it's good to include them
  */

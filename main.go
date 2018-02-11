@@ -161,6 +161,10 @@ func _printIssues(ad ArgumentData, args []string) {
 		return "\033[33;1m" + s + "\033[0m"
 	}
 
+	fnBoldRed := func(s string) string {
+		return "\033[31;1m" + s + "\033[0m"
+	}
+
 	fnYellow := func(s string) string {
 		return "\033[33m" + s + "\033[0m"
 	}
@@ -211,7 +215,12 @@ func _printIssues(ad ArgumentData, args []string) {
 					label.colorR, label.colorG, label.colorB)
 			}
 
-			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+" %s\n",
+			printIssue := fnBoldYellow
+			if issue.is_closed {
+				printIssue = fnBoldRed
+			}
+			
+			fmt.Printf("\t#"+fnBold("%d")+" - "+printIssue("%s")+" %s\n",
 				issue.number, issue.name, slabels)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
 				issue.author, issue.creation)
@@ -222,6 +231,10 @@ func _printIssues(ad ArgumentData, args []string) {
 					", "))
 			}
 			fmt.Printf("\tAssigned to %s\n", strissue)
+			if issue.is_closed {
+				fmt.Println("\tThis issue has been closed")
+			}
+			
 			fmt.Println("\tView it online: " + issue.url)
 			fmt.Println()
 			fmt.Println(issue.content)
@@ -265,10 +278,21 @@ func _printIssues(ad ArgumentData, args []string) {
 				" "+label.name+" ",
 				label.colorR, label.colorG, label.colorB)
 		}
+		
+		printIssue := fnBoldYellow
+		if issue.is_closed {
+			printIssue = fnBoldRed
+		}
+
+		printIssueShort := func(s string) string { return s }
+		if issue.is_closed {
+			printIssueShort = fnBoldRed
+		}
+
 
 		if printMode == "long" || printMode == "full" {
 
-			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+" %s\n",
+			fmt.Printf("\t#"+fnBold("%d")+" - "+printIssue("%s")+" %s\n",
 				issue.number, issue.name, slabels)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
 				issue.author, issue.creation)
@@ -279,15 +303,16 @@ func _printIssues(ad ArgumentData, args []string) {
 					", "))
 			}
 			fmt.Printf("\tAssigned to %s\n", strissue)
-
+			if issue.is_closed {
+				fmt.Println("\tThis issue has been closed")
+			}
 			fmt.Println("\tView it online: " + issue.url)
 			fmt.Println()
 			fmt.Println(issue.content)
-			fmt.Println()
-			fmt.Println("________________________________________________")
-			fmt.Println()
+			fmt.Println("\n ")
+			
 		} else if printMode == "oneline" || printMode == "short" {
-			fmt.Printf(" #"+fnBold("%d")+" %s (by "+fnYellow("%s")+")  %s\n",
+			fmt.Printf(" #"+fnBold("%d")+" "+printIssueShort("%s")+" (by "+fnYellow("%s")+")  %s\n",
 				issue.number, issue.name, issue.author, slabels)
 		} else {
 			panic("Mode " + printMode + " is unknown. \n" +
