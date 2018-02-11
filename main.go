@@ -119,12 +119,12 @@ func main() {
 		raw := exec.Command("stty", "-echo")
 		raw.Stdin = os.Stdin
 		_ = raw.Run()
-		
+
 		pwd, _ := reader.ReadString('\n')
 		raw = exec.Command("stty", "echo")
 		raw.Stdin = os.Stdin
 		_ = raw.Run()
-		
+
 		pwd = strings.Trim(pwd, "\n\r")
 		ad.auth.password = pwd
 		fmt.Println()
@@ -185,6 +185,13 @@ func _printIssues(ad ArgumentData, args []string) {
 				issue.number, issue.name)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
 				issue.author, issue.creation)
+
+			strissue := "no one"
+			if len(issue.assignees) > 0 {
+				strissue = fnYellow(strings.Join(issue.assignees,
+					", "))
+			}
+			fmt.Printf("\tAssigned to %s\n", strissue)
 			fmt.Println("\tView it online: " + issue.url)
 			fmt.Println()
 			fmt.Println(issue.content)
@@ -226,6 +233,14 @@ func _printIssues(ad ArgumentData, args []string) {
 				issue.number, issue.name)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
 				issue.author, issue.creation)
+
+			strissue := "no one"
+			if len(issue.assignees) > 0 {
+				strissue = fnYellow(strings.Join(issue.assignees,
+					", "))
+			}
+			fmt.Printf("\tAssigned to %s\n", strissue)
+
 			fmt.Println("\tView it online: " + issue.url)
 			fmt.Println()
 			fmt.Println(issue.content)

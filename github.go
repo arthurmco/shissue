@@ -185,6 +185,13 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication) ([]TIssue, error
 		issues[idx].name = ghissue.Title
 		issues[idx].url = ghissue.Html_url
 		issues[idx].author = ghissue.User.Login
+
+		assignees := make([]string, 0)
+		for _, assignee := range ghissue.Assignees {
+			assignees = append(assignees, assignee.Login)
+		}
+		issues[idx].assignees = assignees
+		
 		issues[idx].creation = ghissue.Created_at
 		issues[idx].content = ghissue.Body
 	}
@@ -230,6 +237,13 @@ func (gh *TGitHubRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 	issue.name = ghissue.Title
 	issue.url = ghissue.Html_url
 	issue.author = ghissue.User.Login
+
+	assignees := make([]string, 0)
+	for _, assignee := range ghissue.Assignees {
+		assignees = append(assignees, assignee.Login)
+	}
+	issue.assignees = assignees
+	
 	issue.creation = ghissue.Created_at
 	issue.content = ghissue.Body
 

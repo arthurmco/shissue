@@ -33,6 +33,12 @@ type TRepository struct {
 	host    *TRepoHost // Pointer to the repository host
 }
 
+type TIssueLabel struct {
+	name string // Issue label name
+
+	colorR, colorG, colorB int8 // Color data, only for decoration
+}
+
 /* The issue itself */
 type TIssue struct {
 	// Issue ID, in the repository host API
@@ -43,9 +49,12 @@ type TIssue struct {
 	name     string    // Issue name
 	url      string    // Issue URL, to view it online
 	author   string    // Issue author
+	assignees []string   // People assigned with the issue
+	
 	creation time.Time // Issue creation date
 
 	content string // Issue content
+	labels TIssueLabel // Issue label
 }
 
 /* Issue comment.
