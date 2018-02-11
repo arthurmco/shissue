@@ -21,8 +21,7 @@ managing git issue history?
    tool is... well...
  - Set the environment variable `GOPATH` to the top of that tree.
  - `git clone` this source inside that tree
- - `go build` and `go install`
- - A binary will be waiting for you in `$GOPATH/bin`. Put it in /usr/local/bin
+ - Run the build.sh script with the folder you want to install shissue as the argument (like `sh build.sh /usr/local/bin`). **Note that, for some directories, you need to run the script as root!**
  
  Obs: I'm not a Go expert. I am angry, but it's because I need help.
  
@@ -33,11 +32,17 @@ managing git issue history?
 ```
  shissue - view github issues in command line
 
- Usage: shissue [command] [commandargs...]
+ Usage: shissue [options] command [commandargs...]
 
  Commands: 
 	help                 Print this help text
 	issues               List repository issues
+
+ Options: 
+ [-U|--username] <<username>>
+	specify the username used in your github account
+ [-P|--password] <<password>>
+	specify the password used in your github account
 
 ```
 
@@ -54,7 +59,7 @@ Support for *everything* in this list is planned, so don't worry! :smile:
 
  - Support reading issues from
    - **Github public repos**
-   - Github private repos
+   - **Github private repos** (Maybe? Need to check. I don't have private repos)
    - Gitlab public & private repos
    - Bitbucket public & private repos
    
