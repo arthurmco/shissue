@@ -256,15 +256,16 @@ func _printIssues(ad ArgumentData, args []string) {
 	}
 
 	for _, issue := range issues {
+
+		slabels := ""
+		for _, label := range issue.labels {
+			slabels = slabels + " " + fnPrintBackColor(
+				" "+label.name+" ",
+				label.colorR, label.colorG, label.colorB)
+		}
+
 		if printMode == "long" || printMode == "full" {
 
-			slabels := ""
-			for _, label := range issue.labels {
-				slabels = slabels + " " + fnPrintBackColor(
-					" "+label.name+" ",
-					label.colorR, label.colorG, label.colorB)
-			}
-			
 			fmt.Printf("\t#"+fnBold("%d")+" - "+fnBoldYellow("%s")+" %s\n",
 				issue.number, issue.name, slabels)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
@@ -284,8 +285,8 @@ func _printIssues(ad ArgumentData, args []string) {
 			fmt.Println("________________________________________________")
 			fmt.Println()
 		} else if printMode == "oneline" || printMode == "short" {
-			fmt.Printf(" #"+fnBold("%d")+" %s (by "+fnYellow("%s")+")\n",
-				issue.number, issue.name, issue.author)
+			fmt.Printf(" #"+fnBold("%d")+" %s (by "+fnYellow("%s")+")  %s\n",
+				issue.number, issue.name, issue.author, slabels)
 		} else {
 			panic("Mode " + printMode + " is unknown. \n" +
 				"Try 'long' or 'full' for a complete detail of issues\n" +
