@@ -153,6 +153,20 @@ func _printIssues(ad ArgumentData, args []string) {
 		}
 	}
 
+	if args[1] == "help" {
+		fmt.Println(args[0] + " [full|short|<issue_num>] [filters] ")
+		fmt.Println(" Get an issue list ")
+		fmt.Println()
+		fmt.Println(" filters can be one or more of:")
+		fmt.Println(" \tlabels <label1,[label2...]> - Filter by labels")
+		fmt.Println(" \tassignee <assignee> - Filter by users that have an issue assigned to them")
+		fmt.Println(" \tcreator <creator>  - Filter by issue creators,")
+		fmt.Println(" \t[open|closed|all] - Get only open, only closed or all issues")
+		fmt.Println()
+		return
+	}
+	
+
 	r := getRepositoryHost(ad.auth)
 
 	fnBold := func(s string) string {

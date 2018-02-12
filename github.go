@@ -127,8 +127,9 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication, params
 
 	client := http.Client{}
 
-	// Replace spaces with HTTP-allowed spaces
+	// Replace spaces with HTTP-allowed spaces and + with HTTP-blessed ones
 	params = strings.Replace(params, " ", "%20", -1)
+	params = strings.Replace(params, "%", "%2B", -1)
 
 	// Build the request, and then do it
 	req, err := http.NewRequest("GET", url+"?per_page=100&"+params, nil)
