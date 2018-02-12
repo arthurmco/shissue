@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
 )
 
 /**
@@ -170,7 +171,7 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	issue_url := strings.Replace(gh.Issues_url, "{/number}", "", 1)
 
 	// Build filters
-	paramstr := make([]string, 0)
+	paramstr := make([]string, 0, 4)
 	if filter.labels != nil {
 		// Build label parameter filter
 		// They need to be comma-separated
@@ -197,12 +198,14 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	}
 
 	if filter.creator != nil {
-		paramstr = append(paramstr, "creator==" + *filter.creator)
+		paramstr = append(paramstr, "creator=" + *filter.creator)
 	}
-	
 
 	resp, err := gh.buildGetRequest(issue_url, auth, strings.Join(
 		paramstr, "&"))
+
+	fmt.Println(paramstr)
+	
 	if err != nil {
 		return nil, err
 	}

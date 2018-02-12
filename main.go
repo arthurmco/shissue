@@ -148,7 +148,9 @@ func _printHelp(ad ArgumentData, args []string) {
 func _printIssues(ad ArgumentData, args []string) {
 	printMode := "long"
 	if len(args) > 1 {
-		printMode = args[1]
+		if args[1] == "long" || args[1] == "full" || args[1] == "short" || args[1] == "oneline" {
+			printMode = args[1]
+		}
 	}
 
 	r := getRepositoryHost(ad.auth)
@@ -183,9 +185,7 @@ func _printIssues(ad ArgumentData, args []string) {
 		// number to a 256-color compatible one
 		cR, cG, cB := r/51, g/51, b/51
 
-		
-		
-		if cR + uint8(float32(cG)*2.5) + cB > 9 {
+		if cR+uint8(float32(cG)*2.5)+cB > 9 {
 			s = "\033[30m" + s
 		}
 
@@ -219,7 +219,7 @@ func _printIssues(ad ArgumentData, args []string) {
 			if issue.is_closed {
 				printIssue = fnBoldRed
 			}
-			
+
 			fmt.Printf("\t#"+fnBold("%d")+" - "+printIssue("%s")+" %s\n",
 				issue.number, issue.name, slabels)
 			fmt.Printf("\tCreated by "+fnBoldBlue("%s")+" in %v\n",
@@ -234,7 +234,7 @@ func _printIssues(ad ArgumentData, args []string) {
 			if issue.is_closed {
 				fmt.Println("\tThis issue has been closed")
 			}
-			
+
 			fmt.Println("\tView it online: " + issue.url)
 			fmt.Println()
 			fmt.Println(issue.content)
@@ -264,8 +264,71 @@ func _printIssues(ad ArgumentData, args []string) {
 		}
 	}
 
+	filter := TIssueFilter{
+		labels:    nil,
+		assignee:  nil,
+		getOpen:   true,
+		getClosed: false,
+		creator:   nil,
+	}
+
+	// Create the filter structure
+	// Do not need to be done if you want to get a specific issue
+	if len(args) > 1 {
+		for idx, param := range args[1:] {
+			if param == "labels" || param == "label" {
+				// Get the labels
+				// They are comma-separated values
+				if len(args) < idx+1 {
+					panic("Label list not specified!")
+				}
+
+				labelarr := strings.Split(args[1+idx+1], ",")
+				labellist := make([]TIssueLabel, 0, len(labelarr))
+
+				for _, l := range labelarr {
+					labellist = append(labellist, TIssueLabel{
+						name: strings.Trim(l, " "),
+					})
+				}
+
+				filter.labels = &labellist
+				continue
+			}
+
+			if param == "assignee" {
+				// Get the assignee
+				if len(args) < idx+1 {
+					panic("Assignee not specified!")
+				}
+				filter.assignee = &args[1+idx+1]
+				continue
+			}
+
+			if param == "creator" {
+				// Get the assignee
+				if len(args) < idx+1 {
+					panic("Creator not specified!")
+				}
+				filter.creator = &args[1+idx+1]
+				continue
+			}
+
+			if param == "closed" {
+				filter.getClosed = true
+				filter.getOpen = false
+			}
+
+			if param == "all" {
+				filter.getClosed = true
+				filter.getOpen = true
+			}
+
+		}
+	}
+
 	// If not, it might be the type. Download everybody, then!
-	issues, err := r.DownloadAllIssues(ad.auth)
+	issues, err := r.DownloadAllIssues(ad.auth, filter)
 	if err != nil {
 		panic(err)
 	}
@@ -278,7 +341,7 @@ func _printIssues(ad ArgumentData, args []string) {
 				" "+label.name+" ",
 				label.colorR, label.colorG, label.colorB)
 		}
-		
+
 		printIssue := fnBoldYellow
 		if issue.is_closed {
 			printIssue = fnBoldRed
@@ -288,7 +351,6 @@ func _printIssues(ad ArgumentData, args []string) {
 		if issue.is_closed {
 			printIssueShort = fnBoldRed
 		}
-
 
 		if printMode == "long" || printMode == "full" {
 
@@ -310,7 +372,7 @@ func _printIssues(ad ArgumentData, args []string) {
 			fmt.Println()
 			fmt.Println(issue.content)
 			fmt.Println("\n ")
-			
+
 		} else if printMode == "oneline" || printMode == "short" {
 			fmt.Printf(" #"+fnBold("%d")+" "+printIssueShort("%s")+" (by "+fnYellow("%s")+")  %s\n",
 				issue.number, issue.name, issue.author, slabels)
@@ -318,7 +380,7 @@ func _printIssues(ad ArgumentData, args []string) {
 			panic("Mode " + printMode + " is unknown. \n" +
 				"Try 'long' or 'full' for a complete detail of issues\n" +
 				"or 'oneline' or 'short' for a simple listing, with only name and number\n" +
-			" or try issues <num> to see the issue of number <num>")
+				" or try issues <num> to see the issue of number <num>")
 		}
 	}
 
