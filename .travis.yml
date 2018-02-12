@@ -8,5 +8,5 @@ before-install:
         go get ./..
 
 script:
-        go build
-        ./shissue issues short
+        - go build
+        - ./shissue issues short
