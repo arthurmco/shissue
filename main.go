@@ -153,7 +153,7 @@ func _printIssues(ad ArgumentData, args []string) {
 		}
 	}
 
-	if args[1] == "help" {
+	if len(args) > 1 && args[1] == "help" {
 		fmt.Println(args[0] + " [full|short|<issue_num>] [filters] ")
 		fmt.Println(" Get an issue list ")
 		fmt.Println()
