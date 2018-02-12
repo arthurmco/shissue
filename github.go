@@ -154,6 +154,51 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication, params
 	return resp, nil
 }
 
+/* Download a range of issues based on a certain filter, return the amount of what are really issues
+ * Because Github API doesn't differentiate issues from pull requests, this is needed
+ *
+ * It fills the 'issuelist' with the found issues
+ *
+ * The maximum allowed by the API is 100, and it downloads 100 by 199, so count+start needs to be less
+ * than 100.
+ */
+func (gh *TGitHubRepo) downloadIssueRange(start, count int, auth *TAuthentication,
+	url, params string, issuelist *[]TGitHubIssue) (int, error) {
+
+
+	resp, err := gh.buildGetRequest(url, auth, params)
+
+	if err != nil {
+		return 0, err
+	}
+	
+	// Read the result and build the JSON
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	var ghissues []TGitHubIssue
+	err = json.Unmarshal(body, &ghissues)
+
+	if len(ghissues) < start {
+		// No issues to return
+		return 0, nil
+	}
+
+	// TODO: Differentiate issues from pull requests
+
+	count = len(ghissues)
+	icount := 0
+	for _, iss := range ghissues[start:(count-start)] {
+		icount += 1
+		*issuelist = append(*issuelist, iss)
+	}
+
+	return icount, nil
+}
+
 /*
  * Download all issues from this github repository
  * You can use the TAuthentication struct to pass authentication info
@@ -204,25 +249,45 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 		paramstr = append(paramstr, "creator="+*filter.creator)
 	}
 
-	resp, err := gh.buildGetRequest(issue_url, auth, strings.Join(
-		paramstr, "&"))
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Read the result and build the JSON
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
 
 	var ghissues []TGitHubIssue
-	err = json.Unmarshal(body, &ghissues)
-	if err != nil {
-		return nil, err
+	imin, imax := 0, 1000
+	icurr := imin
+	ioff := icurr
+	pagen := 1
+	const pagecount = 100
+
+	params := strings.Join(paramstr, "&")
+
+	for icurr < imax {
+		var pageissues []TGitHubIssue
+		iret, err := gh.downloadIssueRange(ioff, pagecount, auth,
+			issue_url, params + "&page="+strconv.Itoa(pagen),
+			&pageissues)
+
+		if err != nil {
+			return nil, err
+		}
+
+		// No pages
+		if iret == 0 {
+			break
+		}
+
+		ghissues = append(ghissues, pageissues...)
+
+		// Didn't reached the page count
+		if iret < pagecount {
+			break
+		}
+
+		pagen += 1
+		icurr += pagecount
+		ioff = 0
 	}
+	
+	
+	
 
 	issues := make([]TIssue, len(ghissues))
 
