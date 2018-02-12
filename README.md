@@ -53,6 +53,10 @@ managing git issue history?
  
  * You can specify only 'username'. If you do that, the software will ask for the 
    password.
+   
+To see a video of shissue in action, check the video below:
+
+[![asciicast](https://asciinema.org/a/qDxWdqzvO5VLnBlpOTdnNz1Im.png)](https://asciinema.org/a/qDxWdqzvO5VLnBlpOTdnNz1Im)
 
 ## What do we have?
 
