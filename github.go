@@ -162,9 +162,11 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication, params
  * The maximum allowed by the API is 100, and it downloads 100 by 199, so count+start needs to be less
  * than 100.
  */
-func (gh *TGitHubRepo) downloadIssueRange(start, count int, auth *TAuthentication,
-	url, params string, issuelist *[]TGitHubIssue) (int, error) {
+func (gh *TGitHubRepo) downloadIssueRange(start, count, page int,
+	auth *TAuthentication, 	url, params string,
+	issuelist *[]TGitHubIssue) (int, error) {
 
+	params = params + "&page="+strconv.Itoa(page)
 
 	resp, err := gh.buildGetRequest(url, auth, params)
 
@@ -261,9 +263,8 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 
 	for icurr < imax {
 		var pageissues []TGitHubIssue
-		iret, err := gh.downloadIssueRange(ioff, pagecount, auth,
-			issue_url, params + "&page="+strconv.Itoa(pagen),
-			&pageissues)
+		iret, err := gh.downloadIssueRange(ioff, pagecount, pagen, auth,
+			issue_url, params, &pageissues)
 
 		if err != nil {
 			return nil, err
