@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
 )
 
 /**
@@ -128,8 +127,11 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication, params
 
 	client := http.Client{}
 
+	// Replace spaces with HTTP-allowed spaces
+	params = strings.Replace(params, " ", "%20", -1)
+
 	// Build the request, and then do it
-	req, err := http.NewRequest("GET", url + "?per_page=100&" + params, nil)
+	req, err := http.NewRequest("GET", url+"?per_page=100&"+params, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -180,13 +182,13 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 			labelarr = append(labelarr, l.name)
 		}
 
-		paramstr = append(paramstr, "labels=" + strings.Join(
+		paramstr = append(paramstr, "labels="+strings.Join(
 			labelarr, ","))
 
 	}
 
 	if filter.assignee != nil {
-		paramstr = append(paramstr, "assignee=" + *filter.assignee)
+		paramstr = append(paramstr, "assignee="+*filter.assignee)
 	}
 
 	if filter.getOpen && filter.getClosed {
@@ -198,14 +200,12 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	}
 
 	if filter.creator != nil {
-		paramstr = append(paramstr, "creator=" + *filter.creator)
+		paramstr = append(paramstr, "creator="+*filter.creator)
 	}
 
 	resp, err := gh.buildGetRequest(issue_url, auth, strings.Join(
 		paramstr, "&"))
 
-	fmt.Println(paramstr)
-	
 	if err != nil {
 		return nil, err
 	}
@@ -213,6 +213,9 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	// Read the result and build the JSON
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	var ghissues []TGitHubIssue
 	err = json.Unmarshal(body, &ghissues)
@@ -321,7 +324,7 @@ func (gh *TGitHubRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 	issue.creation = ghissue.Created_at
 	issue.content = ghissue.Body
 	issue.is_closed = (ghissue.State == "closed")
-	
+
 	return issue, nil
 }
 
