@@ -60,7 +60,7 @@ type TIssue struct {
 }
 
 /* Issue comment.
- * They might be as important as the issue itself, because they contain additional info and 
+ * They might be as important as the issue itself, because they contain additional info and
  * decisions made that can change the issue meaning
  *
  * So it's good to include them
@@ -72,6 +72,17 @@ type TIssueComment struct {
 	creation time.Time // Comment creation date
 
 	content string // Comment content
+}
+
+/* Filter for the issue query
+ * If any of the issue query filters are 'null', it means that it shouldn't be
+ * considered
+ */
+type TIssueFilter struct {
+	labels   *[]TIssueLabel // Label list, 'nil' if no label filter
+	assignee *string // Only get issues assigned to 'assignee'
+	getOpen, getClosed bool // True if you want to get open or closed issues
+	creator *string // Only get issues made by 'creator'
 }
 
 type TRepoHost interface {
@@ -94,7 +105,7 @@ type TRepoHost interface {
 	 * Return an issue list on success, or nil on issue list and an error
 	 * on error
 	 */
-	DownloadAllIssues(auth *TAuthentication) ([]TIssue, error)
+	DownloadAllIssues(auth *TAuthentication, filter TIssueFilter) ([]TIssue, error)
 
 	/* Download an specific issue by ID,
 	 */

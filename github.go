@@ -86,7 +86,7 @@ func (gh *TGitHubRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
 	api_url := "https://api.github.com/repos/" + username + "/" + reponame
 
 	// Now we need to download this.
-	resp, err := gh.buildGetRequest(api_url, auth)
+	resp, err := gh.buildGetRequest(api_url, auth, "")
 
 	if err != nil {
 		return "", err
@@ -120,14 +120,15 @@ func (gh *TGitHubRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
 }
 
 /* Build and send a common GET request to the API.
+ * 'params' is an "HTTP GET"-like parameter string, without the '?'
  * Return the response object on success, or an error.
  */
-func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication) (*http.Response, error) {
+func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication, params string) (*http.Response, error) {
 
 	client := http.Client{}
 
 	// Build the request, and then do it
-	req, err := http.NewRequest("GET", url + "?per_page=1000", nil)
+	req, err := http.NewRequest("GET", url + "?per_page=100&" + params, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +160,7 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication) (*http
  * Return an issue list on success, or nil on issue list and an error
  * on error
  */
-func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication) ([]TIssue, error) {
+func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFilter) ([]TIssue, error) {
 	if !gh.Has_issues {
 		// Return a nil list, since this repository doesn't has issues
 		// Return no errors too, since no error has been found
@@ -168,7 +169,40 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication) ([]TIssue, error
 
 	issue_url := strings.Replace(gh.Issues_url, "{/number}", "", 1)
 
-	resp, err := gh.buildGetRequest(issue_url, auth)
+	// Build filters
+	paramstr := make([]string, 0)
+	if filter.labels != nil {
+		// Build label parameter filter
+		// They need to be comma-separated
+		labelarr := make([]string, 0)
+		for _, l := range *filter.labels {
+			labelarr = append(labelarr, l.name)
+		}
+
+		paramstr = append(paramstr, "labels=" + strings.Join(
+			labelarr, ","))
+
+	}
+
+	if filter.assignee != nil {
+		paramstr = append(paramstr, "assignee=" + *filter.assignee)
+	}
+
+	if filter.getOpen && filter.getClosed {
+		paramstr = append(paramstr, "state=all")
+	} else if !filter.getOpen && filter.getClosed {
+		paramstr = append(paramstr, "state=closed")
+	} else {
+		paramstr = append(paramstr, "state=open")
+	}
+
+	if filter.creator != nil {
+		paramstr = append(paramstr, "creator==" + *filter.creator)
+	}
+	
+
+	resp, err := gh.buildGetRequest(issue_url, auth, strings.Join(
+		paramstr, "&"))
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +268,7 @@ func (gh *TGitHubRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 	issue_url := strings.Replace(gh.Issues_url, "{/number}",
 		"/"+strconv.Itoa(int(id)), 1)
 
-	resp, err := gh.buildGetRequest(issue_url, auth)
+	resp, err := gh.buildGetRequest(issue_url, auth, "")
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +334,7 @@ func (gh *TGitHubRepo) DownloadIssueComments(auth *TAuthentication, issue_id uin
 	comment_url := strings.Replace(gh.Issues_url, "{/number}",
 		"/"+strconv.Itoa(int(issue_id))+"/comments", 1)
 
-	resp, err := gh.buildGetRequest(comment_url, auth)
+	resp, err := gh.buildGetRequest(comment_url, auth, "")
 	if err != nil {
 		return nil, err
 	}

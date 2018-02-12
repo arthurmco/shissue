@@ -9,4 +9,3 @@ before-install:
 
 script:
         - go build
-        - ./shissue issues short
