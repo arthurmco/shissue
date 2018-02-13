@@ -25,6 +25,23 @@ func (e *errRepoLimit) Error() string {
 	return e.err
 }
 
+
+/*
+ * Get a property from git configuration
+ * Since Git is our backend, is much more easier to store the custom properties 
+ * inside git configuration than to rolling up our own
+ */
+func getGitProperty(name string) (string, error) {
+	bout, err := exec.Command("/bin/sh", "-c", "git config " + name).Output()
+
+	if err != nil {
+		return "", err
+	}
+
+	// get the '\n' out
+	return string(bout[:len(bout)-1]), nil
+}
+
 /* Get the repository from the directory 'dir' */
 func getRepository(dir string) (*TRepository, error) {
 

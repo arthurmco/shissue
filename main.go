@@ -54,6 +54,7 @@ func printHelp() {
 	fmt.Println()
 }
 
+
 /* Parse the arguments
  * Return the argument index of the subcommand
  */
@@ -66,7 +67,9 @@ func parseArgs(ad *ArgumentData) uint {
 				panic("Username not specified")
 			}
 
-			ad.auth = new(TAuthentication)
+			if ad.auth == nil {
+				ad.auth = new(TAuthentication)
+			}
 			ad.auth.username = os.Args[idx+1]
 			commandstart = uint(idx + 2)
 		}
@@ -100,6 +103,16 @@ func main() {
 	// Process general parameters
 	var ad ArgumentData
 	ad.auth = nil
+
+	// Get username and token from git configuration
+	username, _ := getGitProperty("shissue.username")
+	token, _ := getGitProperty("shissue.token")
+
+	if username != "" || token != "" {
+		ad.auth = new(TAuthentication)
+		ad.auth.username = username
+		ad.auth.token = token
+	}
 
 	commandstart := parseArgs(&ad)
 

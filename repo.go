@@ -20,6 +20,7 @@ import (
 type TAuthentication struct {
 	username string
 	password string
+	token string
 }
 
 type TRepository struct {

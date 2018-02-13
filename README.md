@@ -53,7 +53,9 @@ managing git issue history?
  
  * You can specify only 'username'. If you do that, the software will ask for the 
    password.
-   
+
+ * You can also store the username inside git configuration (using `git config`). Use `git config shissue.username <<username>>` for storing the github username, and you won't have to type it.
+
 To see a video of shissue in action, check the video below:
 
 [![asciicast](https://asciinema.org/a/qDxWdqzvO5VLnBlpOTdnNz1Im.png)](https://asciinema.org/a/qDxWdqzvO5VLnBlpOTdnNz1Im)
