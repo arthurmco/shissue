@@ -113,7 +113,7 @@ func getRepository(dir string) (*TRepository, error) {
  * Panics if you can't get it, but it doesn't matter. You wouldn't be able to do
  * nothing if it didn't fail...
  */
-func getRepositoryHost(auth *TAuthentication) *TGitHubRepo {
+func getRepositoryHost(auth *TAuthentication) TRepoHost {
 	/* Get an repository */
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -125,13 +125,13 @@ func getRepositoryHost(auth *TAuthentication) *TGitHubRepo {
 		panic("Error while getting the repository: " + err.Error() + "\n")
 	}
 
-	/* Get the github information.
-	 * TODO: support gitlab, bitbucket...
+	/* Try getting info on github.
+	 * TODO: bitbucket...
 	 */
-	r := new(TGitHubRepo)
-	_, err = r.Initialize(auth, repo)
+	gr := new(TGitHubRepo)
+	_, err = gr.Initialize(auth, repo)
 	if err == nil {
-		return r
+		return gr
 	}
 
 	// This is an authentication/permission error, not an
@@ -141,7 +141,15 @@ func getRepositoryHost(auth *TAuthentication) *TGitHubRepo {
 			panic(err)
 		}
 	}
+	
+	lr := new(TGitLabRepo)
+	_, err = lr.Initialize(auth, repo)
+	if err == nil {
+		return lr
+	}
 
-	panic("This repository remote isn't supported")
+	// Try getting information on gitlab
+
+	panic(err)
 
 }
