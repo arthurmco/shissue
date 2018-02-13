@@ -64,7 +64,13 @@ func (gl *TGitLabRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
  * on error
  */
 func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFilter) ([]TIssue, error) {
-	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID, nil)
+
+	var goptions gitlab.ListProjectIssuesOptions
+	goptions.Page = 1
+	goptions.PerPage = 1000
+	
+	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID,
+		&goptions)
 
 	if err != nil {
 		return nil, err
