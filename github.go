@@ -66,14 +66,6 @@ type TGitHubIssueComment struct {
 	Created_at time.Time
 }
 
-type errGithubRepo struct {
-	err string
-}
-
-func (e *errGithubRepo) Error() string {
-	return e.err
-}
-
 func (gh *TGitHubRepo) Initialize(auth *TAuthentication, repo *TRepository) (string, error) {
 
 	// We need to get the api URL from the repository URL
@@ -93,14 +85,14 @@ func (gh *TGitHubRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
 	}
 
 	if resp.StatusCode == 404 {
-		return "", &errGithubRepo{"Repository not found!"}
+		return "", &RepoConnectError{"Repository not found!", 404}
 	}
 
 	if resp.StatusCode == 403 {
 		if resp.Header.Get("X-RateLimit-Remaining") == "0" {
-			return "", &errGithubRepo{"Github API rate limit exceeded"}
+			return "", &RepoConnectError{"Github API rate limit exceeded", 403}
 		} else {
-			return "", &errGithubRepo{"Permission error!"}
+			return "", &RepoConnectError{"Permission error!", 403}
 		}
 	}
 
@@ -148,7 +140,7 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication, params
 	}
 
 	if resp.StatusCode == 401 {
-		return nil, &errGithubRepo{"Authentication failed: wrong username and/or password"}
+		return nil, &RepoConnectError{"Authentication failed: wrong username and/or password", 401}
 	}
 
 	return resp, nil
@@ -163,17 +155,17 @@ func (gh *TGitHubRepo) buildGetRequest(url string, auth *TAuthentication, params
  * than 100.
  */
 func (gh *TGitHubRepo) downloadIssueRange(start, count, page int,
-	auth *TAuthentication, 	url, params string,
+	auth *TAuthentication, url, params string,
 	issuelist *[]TGitHubIssue) (int, error) {
 
-	params = params + "&page="+strconv.Itoa(page)
+	params = params + "&page=" + strconv.Itoa(page)
 
 	resp, err := gh.buildGetRequest(url, auth, params)
 
 	if err != nil {
 		return 0, err
 	}
-	
+
 	// Read the result and build the JSON
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -193,7 +185,7 @@ func (gh *TGitHubRepo) downloadIssueRange(start, count, page int,
 
 	count = len(ghissues)
 	icount := 0
-	for _, iss := range ghissues[start:(count-start)] {
+	for _, iss := range ghissues[start:(count - start)] {
 		icount += 1
 		*issuelist = append(*issuelist, iss)
 	}
@@ -251,7 +243,6 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 		paramstr = append(paramstr, "creator="+*filter.creator)
 	}
 
-
 	var ghissues []TGitHubIssue
 	imin, imax := 0, 1000
 	icurr := imin
@@ -286,9 +277,6 @@ func (gh *TGitHubRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 		icurr += pagecount
 		ioff = 0
 	}
-	
-	
-	
 
 	issues := make([]TIssue, len(ghissues))
 
@@ -346,6 +334,9 @@ func (gh *TGitHubRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 		return nil, err
 	}
 
+	/* No issues found. This isn't an error per se, only mean that this repo
+	 * doesn't have any issues
+	 */
 	if resp.StatusCode == 404 {
 		return nil, nil
 	}
@@ -412,6 +403,9 @@ func (gh *TGitHubRepo) DownloadIssueComments(auth *TAuthentication, issue_id uin
 		return nil, err
 	}
 
+	/* No issue comments. This isn't an error, only means that this issue
+	 * doesn't have comments
+	 */
 	if resp.StatusCode == 404 {
 		return nil, nil
 	}

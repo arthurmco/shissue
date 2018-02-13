@@ -130,10 +130,18 @@ func getRepositoryHost(auth *TAuthentication) *TGitHubRepo {
 	 */
 	r := new(TGitHubRepo)
 	_, err = r.Initialize(auth, repo)
-	if err != nil {
-		panic(err)
+	if err == nil {
+		return r
 	}
 
-	return r
+	// This is an authentication/permission error, not an
+	// 'repo doesn't exist error
+	if ec, ok := err.(*RepoConnectError); ok {
+		if ec.ErrorCode == 401 || ec.ErrorCode == 403 {
+			panic(err)
+		}
+	}
+
+	panic("This repository remote isn't supported")
 
 }

@@ -60,6 +60,17 @@ type TIssue struct {
 	is_closed bool // Is the issue closed?
 }
 
+/* Error type that happened when you couldn't connect to your repository */
+type RepoConnectError struct {
+	err string
+	ErrorCode int
+}
+
+func (e *RepoConnectError) Error() string {
+	return e.err
+}
+
+
 /* Issue comment.
  * They might be as important as the issue itself, because they contain additional info and
  * decisions made that can change the issue meaning
