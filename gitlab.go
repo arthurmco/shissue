@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/xanzy/go-gitlab"
+	"strconv"
 )
 
 /**
@@ -54,6 +55,23 @@ func (gl *TGitLabRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
 	return project.SSHURLToRepo, nil
 }
 
+/* Get a map with all labels and the hex colors used in this project */
+func (gl *TGitLabRepo) getLabels() (map[string]string, error) {
+	// Get the label colors. For the visuals!
+	var labelColors = map[string]string{}
+	labels, _, err := gl.client.Labels.ListLabels(gl.project.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range labels {
+		labelColors[l.Name] = l.Color
+	}
+
+	return labelColors, nil
+}
+
 /* Download all issues from the repository
  * You can use the TAuthentication struct to pass authentication info
  * Send it nil for no authentication, but take note that the host
@@ -90,6 +108,11 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 		goptions.State = &gstate
 	}
 
+	labelColors, err := gl.getLabels()
+	if err != nil {
+		return nil, err
+	}
+
 	// Do the request
 
 	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID,
@@ -114,10 +137,17 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 
 		labels := make([]TIssueLabel, 0, len(issue.Labels))
 		for _, label := range issue.Labels {
+			// Gitlab returned label colors have a "#" prefix,
+			// like in '#ff0000'. We need to take it out
+			lcolor := labelColors[label][1:]
+			cR, _ := strconv.ParseUint(lcolor[0:2], 16, 8)
+			cG, _ := strconv.ParseUint(lcolor[2:4], 16, 8)
+			cB, _ := strconv.ParseUint(lcolor[4:6], 16, 8)
+
 			labels = append(labels, TIssueLabel{name: label,
-				colorR: uint8(255),
-				colorG: uint8(255),
-				colorB: uint8(255)})
+				colorR: uint8(cR),
+				colorG: uint8(cG),
+				colorB: uint8(cB)})
 		}
 
 		issues = append(issues, TIssue{
@@ -160,6 +190,11 @@ func (gl *TGitLabRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 		return nil, nil // No issues do not mean error
 	}
 
+	labelColors, err := gl.getLabels()
+	if err != nil {
+		return nil, err
+	}
+
 	glissue := glissues[0]
 
 	assignees := make([]string, 0, len(glissue.Assignees))
@@ -169,10 +204,17 @@ func (gl *TGitLabRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 
 	labels := make([]TIssueLabel, 0, len(glissue.Labels))
 	for _, label := range glissue.Labels {
+		// Gitlab returned label colors have a "#" prefix,
+		// like in '#ff0000'. We need to take it out
+		lcolor := labelColors[label][1:]
+		cR, _ := strconv.ParseUint(lcolor[0:2], 16, 8)
+		cG, _ := strconv.ParseUint(lcolor[2:4], 16, 8)
+		cB, _ := strconv.ParseUint(lcolor[4:6], 16, 8)
+
 		labels = append(labels, TIssueLabel{name: label,
-			colorR: uint8(255),
-			colorG: uint8(255),
-			colorB: uint8(255)})
+			colorR: uint8(cR),
+			colorG: uint8(cG),
+			colorB: uint8(cB)})
 	}
 
 	issue := &TIssue{
