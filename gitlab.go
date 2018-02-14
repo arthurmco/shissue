@@ -69,6 +69,29 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	goptions.Page = 1
 	goptions.PerPage = 1000
 
+	// Create filter
+	if filter.labels != nil {
+		glabels := make([]string, 0, len(*filter.labels))
+		for _, label := range *filter.labels {
+			glabels = append(glabels, label.name)
+		}
+
+		goptions.Labels = glabels
+	}
+
+	gstate := ""
+	if filter.getOpen && !filter.getClosed {
+		gstate = "opened"
+	} else if !filter.getOpen && filter.getClosed {
+		gstate = "closed"
+	}
+
+	if gstate != "" {
+		goptions.State = &gstate
+	}
+
+	// Do the request
+
 	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID,
 		&goptions)
 
