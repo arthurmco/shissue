@@ -12,7 +12,7 @@ import (
 
 // Handler to a gitlab repo
 type TGitLabRepo struct {
-	client *gitlab.Client
+	client  *gitlab.Client
 	project *gitlab.Project
 }
 
@@ -26,7 +26,7 @@ type TGitLabRepo struct {
 func (gl *TGitLabRepo) Initialize(auth *TAuthentication, repo *TRepository) (string, error) {
 
 	token := ""
-	if (auth != nil && auth.token != "") {
+	if auth != nil && auth.token != "" {
 		token = auth.token
 	}
 
@@ -44,7 +44,7 @@ func (gl *TGitLabRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
 	if project.Owner != nil {
 		author = project.Owner.Name
 	}
-	
+
 	repo.name = project.Name
 	repo.desc = project.Description
 	repo.author = author
@@ -68,7 +68,7 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	var goptions gitlab.ListProjectIssuesOptions
 	goptions.Page = 1
 	goptions.PerPage = 1000
-	
+
 	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID,
 		&goptions)
 
@@ -81,7 +81,7 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	if issues == nil {
 		return nil, nil
 	}
-	
+
 	for _, issue := range glissues {
 
 		assignees := make([]string, 0, len(issue.Assignees))
@@ -96,18 +96,17 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 				colorG: uint8(255),
 				colorB: uint8(255)})
 		}
-			
-		
+
 		issues = append(issues, TIssue{
-			id: uint(issue.ID),
-			number: uint(issue.IID),
-			name: issue.Title,
-			url: issue.WebURL,
-			author: issue.Author.Name,
+			id:        uint(issue.ID),
+			number:    uint(issue.IID),
+			name:      issue.Title,
+			url:       issue.WebURL,
+			author:    issue.Author.Name,
 			assignees: assignees,
-			labels: labels,
-			creation: *issue.CreatedAt,
-			content: issue.Description,
+			labels:    labels,
+			creation:  *issue.CreatedAt,
+			content:   issue.Description,
 			is_closed: (issue.State == "closed"),
 		})
 	}
@@ -116,10 +115,57 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 }
 
 /* Download an specific issue by ID,
- */
+ *
+* In Gitlab, the ID used to return the issue is the databse ID.
+* The ID in this parameter is the issue number, what gitlab calls 'iid'
+*/
 func (gl *TGitLabRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, error) {
 
-	return nil, nil
+	var goptions gitlab.ListProjectIssuesOptions
+	goptions.Page = 1
+	goptions.PerPage = 1000
+	goptions.IIDs = append(make([]int, 0, 1), int(id))
+
+	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID,
+		&goptions)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(glissues) == 0 {
+		return nil, nil // No issues do not mean error
+	}
+
+	glissue := glissues[0]
+
+	assignees := make([]string, 0, len(glissue.Assignees))
+	for _, assignee := range glissue.Assignees {
+		assignees = append(assignees, assignee.Name)
+	}
+
+	labels := make([]TIssueLabel, 0, len(glissue.Labels))
+	for _, label := range glissue.Labels {
+		labels = append(labels, TIssueLabel{name: label,
+			colorR: uint8(255),
+			colorG: uint8(255),
+			colorB: uint8(255)})
+	}
+
+	issue := &TIssue{
+		id:        uint(glissue.ID),
+		number:    uint(glissue.IID),
+		name:      glissue.Title,
+		url:       glissue.WebURL,
+		author:    glissue.Author.Name,
+		assignees: assignees,
+		labels:    labels,
+		creation:  *glissue.CreatedAt,
+		content:   glissue.Description,
+		is_closed: (glissue.State == "closed"),
+	}
+
+	return issue, nil
 }
 
 /* Download all comments from that issue */
