@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/xanzy/go-gitlab"
+	"math"
 	"strconv"
 )
 
@@ -72,6 +73,39 @@ func (gl *TGitLabRepo) getLabels() (map[string]string, error) {
 	return labelColors, nil
 }
 
+/**
+ * Download an issue range based on a filter.
+ *
+ * This function returns, at maximum, 100 issues, because it's the gitlab API
+ * limit per request.
+ *
+ * Fills the 'lissue' with the found issues and return the number of issues found
+ */
+func (gl *TGitLabRepo) downloadIssueRange(start, count, page int,
+	auth *TAuthentication, goptions gitlab.ListProjectIssuesOptions,
+	lissue *[]gitlab.Issue) (int, error) {
+	goptions.Page = page
+	goptions.PerPage = 100
+
+	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID,
+		&goptions)
+
+	if err != nil {
+		return 0, err
+	}
+
+	if len(glissues) < start {
+		return 0, nil
+	}
+
+	count = int(math.Min(float64(count), float64(len(glissues)-start)))
+	for _, iss := range glissues[start:(count - start)] {
+		*lissue = append(*lissue, *iss)
+	}
+
+	return count, nil
+}
+
 /* Download all issues from the repository
  * You can use the TAuthentication struct to pass authentication info
  * Send it nil for no authentication, but take note that the host
@@ -84,8 +118,6 @@ func (gl *TGitLabRepo) getLabels() (map[string]string, error) {
 func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFilter) ([]TIssue, error) {
 
 	var goptions gitlab.ListProjectIssuesOptions
-	goptions.Page = 1
-	goptions.PerPage = 1000
 
 	// Create filter
 	if filter.labels != nil {
@@ -114,12 +146,37 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 	}
 
 	// Do the request
+	var glissues []gitlab.Issue
+	imin, imax := 0, 1000
+	icurr := imin
+	ioff := icurr
+	pagen := 1
+	const pagecount = 100
 
-	glissues, _, err := gl.client.Issues.ListProjectIssues(gl.project.ID,
-		&goptions)
+	for icurr < imax {
+		var pageissues []gitlab.Issue
+		iret, err := gl.downloadIssueRange(ioff, pagecount, pagen, auth,
+			goptions, &pageissues)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+
+		// No pages
+		if iret == 0 {
+			break
+		}
+
+		glissues = append(glissues, pageissues...)
+
+		// Didn't reached the page count
+		if iret < pagecount {
+			break
+		}
+
+		pagen += 1
+		icurr += pagecount
+		ioff = 0
 	}
 
 	issues := make([]TIssue, 0, len(glissues))
@@ -139,7 +196,12 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 		for _, label := range issue.Labels {
 			// Gitlab returned label colors have a "#" prefix,
 			// like in '#ff0000'. We need to take it out
-			lcolor := labelColors[label][1:]
+			lcolor := "#ffffff"
+			if (labelColors[label] != "" &&
+				len(labelColors[label]) > 2) {
+				lcolor = labelColors[label][1:]
+			}
+			
 			cR, _ := strconv.ParseUint(lcolor[0:2], 16, 8)
 			cG, _ := strconv.ParseUint(lcolor[2:4], 16, 8)
 			cB, _ := strconv.ParseUint(lcolor[4:6], 16, 8)
@@ -169,9 +231,9 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 
 /* Download an specific issue by ID,
  *
-* In Gitlab, the ID used to return the issue is the databse ID.
-* The ID in this parameter is the issue number, what gitlab calls 'iid'
-*/
+ * In Gitlab, the ID used to return the issue is the databse ID.
+ * The ID in this parameter is the issue number, what gitlab calls 'iid'
+ */
 func (gl *TGitLabRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, error) {
 
 	var goptions gitlab.ListProjectIssuesOptions
