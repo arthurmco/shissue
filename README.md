@@ -55,6 +55,11 @@ managing git issue history?
    password.
 
  * You can also store the username inside git configuration (using `git config`). Use `git config shissue.username <<username>>` for storing the github username, and you won't have to type it.
+ 
+ * In Gitlab, you have the [personal access token](https://docs.gitlab.com/ce/user/profile/personal_access_tokens.html) for accessing repos without 
+   needing a password. Use `git config shissue.token <<token>>` to set it
+   inside shissue.
+   
 
 To see a video of shissue in action, check the video below:
 
@@ -69,7 +74,7 @@ Support for *everything* in this list is planned, so don't worry! :smile:
  - Support reading issues from
    - **Github public repos**
    - **Github private repos** (Maybe? Need to check. I don't have private repos)
-   - Gitlab public & private repos
+   - **Gitlab public & private repos**
    - Bitbucket public & private repos
    
  - Support for creating issues
