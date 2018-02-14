@@ -295,8 +295,45 @@ func (gl *TGitLabRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 	return issue, nil
 }
 
-/* Download all comments from that issue */
+/* Download all comments from that issue 
+ *
+ * Gitlab calls them notes, but is the same thing
+ */
 func (gl *TGitLabRepo) DownloadIssueComments(auth *TAuthentication, issue_id uint) ([]TIssueComment, error) {
 
-	return nil, nil
+	var goptions gitlab.ListIssueNotesOptions
+	goptions.Page = 1
+	goptions.PerPage = 100
+	notes, _, err := gl.client.Notes.ListIssueNotes(gl.project.ID,
+		int(issue_id), &goptions)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if (len(notes) < 0) {
+		return nil, nil
+	}
+
+	comments := make([]TIssueComment, 0, len(notes))
+	
+	for _, note := range notes {
+		// Not from an issue? Continue
+		if note.NoteableType != "Issue" {
+			continue
+		}
+		
+		
+		comments = append(comments, TIssueComment{
+			id: uint(note.ID),
+			url: "", // Looks like we don't have an URL for this issue? Return the issue URL instead?
+			author: note.Author.Name,
+			creation: *note.CreatedAt,
+			content: note.Body,
+		})
+	}
+
+
+	return comments, nil
 }
+ 
