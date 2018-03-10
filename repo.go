@@ -29,7 +29,7 @@ type TRepository struct {
 	author string // Repository author
 
 	url string // Repository external URL
-
+	base_url string // Base URL
 	api_url string     // Repository 'api' URL
 	host    *TRepoHost // Pointer to the repository host
 }

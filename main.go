@@ -7,7 +7,9 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
@@ -24,7 +26,8 @@ import (
  */
 
 type ArgumentData struct {
-	auth *TAuthentication
+	auth                *TAuthentication
+	allowUntrustedCerts bool
 }
 
 type CCommandFunc func(ArgumentData, []string)
@@ -37,7 +40,7 @@ type CCommand struct {
 var commands = make([]CCommand, 0)
 
 func printHelp() {
-	fmt.Println(" shissue - view github issues in command line")
+	fmt.Println(" shissue - view github/gitlab issues in command line")
 	fmt.Println()
 	fmt.Printf(" Usage: %s [options] command [commandargs...]\n", os.Args[0])
 	fmt.Println()
@@ -49,11 +52,11 @@ func printHelp() {
 
 	fmt.Println()
 	fmt.Println(" Options: ")
-	fmt.Println(" [-U|--username] <<username>>\n\tspecify the username used in your github account")
-	fmt.Println(" [-P|--password] <<password>>\n\tspecify the password used in your github account")
+	fmt.Println(" [-U|--username] <<username>>\n\tspecify the username used in your repo account")
+	fmt.Println(" [-P|--password] <<password>>\n\tspecify the password used in your repo account")
+	fmt.Println(" --allow-untrusted-certs\n\tAllow connecting to certificates not trusted by the system")
 	fmt.Println()
 }
-
 
 /* Parse the arguments
  * Return the argument index of the subcommand
@@ -62,6 +65,11 @@ func parseArgs(ad *ArgumentData) uint {
 
 	commandstart := uint(1)
 	for idx, par := range os.Args {
+		if par == "--allow-untrusted-certs" {
+			ad.allowUntrustedCerts = true
+			commandstart = uint(idx + 1)
+		}
+
 		if par == "-U" || par == "--username" {
 			if len(os.Args) < int(idx+1) {
 				panic("Username not specified")
@@ -92,7 +100,6 @@ func parseArgs(ad *ArgumentData) uint {
 }
 
 func main() {
-
 	commands = append(commands,
 		CCommand{name: "help", desc: "Print this help text",
 			function: _printHelp},
@@ -115,6 +122,10 @@ func main() {
 	}
 
 	commandstart := parseArgs(&ad)
+
+	if ad.allowUntrustedCerts == true {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
 
 	if len(os.Args) <= int(commandstart) {
 		// No subcommand called. Print help
@@ -178,7 +189,6 @@ func _printIssues(ad ArgumentData, args []string) {
 		fmt.Println()
 		return
 	}
-	
 
 	r := getRepositoryHost(ad.auth)
 
