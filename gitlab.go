@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"github.com/xanzy/go-gitlab"
 	"math"
 	"strconv"
@@ -33,6 +34,8 @@ func (gl *TGitLabRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
 	}
 
 	git := gitlab.NewClient(nil, token)
+
+	_ = git.SetBaseURL("https://" + repo.base_url + "/api/v4/")
 
 	project, _, err := git.Projects.GetProject(repo.author + "/" + repo.name)
 	if err != nil {
@@ -197,11 +200,11 @@ func (gl *TGitLabRepo) DownloadAllIssues(auth *TAuthentication, filter TIssueFil
 			// Gitlab returned label colors have a "#" prefix,
 			// like in '#ff0000'. We need to take it out
 			lcolor := "#ffffff"
-			if (labelColors[label] != "" &&
-				len(labelColors[label]) > 2) {
+			if labelColors[label] != "" &&
+				len(labelColors[label]) > 2 {
 				lcolor = labelColors[label][1:]
 			}
-			
+
 			cR, _ := strconv.ParseUint(lcolor[0:2], 16, 8)
 			cG, _ := strconv.ParseUint(lcolor[2:4], 16, 8)
 			cB, _ := strconv.ParseUint(lcolor[4:6], 16, 8)
@@ -295,7 +298,7 @@ func (gl *TGitLabRepo) DownloadIssue(auth *TAuthentication, id uint) (*TIssue, e
 	return issue, nil
 }
 
-/* Download all comments from that issue 
+/* Download all comments from that issue
  *
  * Gitlab calls them notes, but is the same thing
  */
@@ -311,29 +314,26 @@ func (gl *TGitLabRepo) DownloadIssueComments(auth *TAuthentication, issue_id uin
 		return nil, err
 	}
 
-	if (len(notes) < 0) {
+	if len(notes) < 0 {
 		return nil, nil
 	}
 
 	comments := make([]TIssueComment, 0, len(notes))
-	
+
 	for _, note := range notes {
 		// Not from an issue? Continue
 		if note.NoteableType != "Issue" {
 			continue
 		}
-		
-		
+
 		comments = append(comments, TIssueComment{
-			id: uint(note.ID),
-			url: "", // Looks like we don't have an URL for this issue? Return the issue URL instead?
-			author: note.Author.Name,
+			id:       uint(note.ID),
+			url:      "", // Looks like we don't have an URL for this issue? Return the issue URL instead?
+			author:   note.Author.Name,
 			creation: *note.CreatedAt,
-			content: note.Body,
+			content:  note.Body,
 		})
 	}
 
-
 	return comments, nil
 }
- 

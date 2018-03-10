@@ -1,8 +1,8 @@
 /**
  * Functions used for repository and host identification
- * 
+ *
  * They identify if the directory is a Git repository, and what host they are
- * 
+ *
  * Currently only github is supported
  *
  * Copyright (C) 2018 Arthur M
@@ -25,14 +25,13 @@ func (e *errRepoLimit) Error() string {
 	return e.err
 }
 
-
 /*
  * Get a property from git configuration
- * Since Git is our backend, is much more easier to store the custom properties 
+ * Since Git is our backend, is much more easier to store the custom properties
  * inside git configuration than to rolling up our own
  */
 func getGitProperty(name string) (string, error) {
-	bout, err := exec.Command("/bin/sh", "-c", "git config " + name).Output()
+	bout, err := exec.Command("/bin/sh", "-c", "git config "+name).Output()
 
 	if err != nil {
 		return "", err
@@ -82,11 +81,12 @@ func getRepository(dir string) (*TRepository, error) {
 		sshregexres := sshregex.FindAllStringSubmatch(remoteurl[0], -1)
 		if sshregexres != nil {
 			return &TRepository{
-				name:    strings.Replace(sshregexres[0][3], ".git", "", -1),
-				desc:    "",
-				author:  sshregexres[0][2],
-				url:     sshregexres[0][0],
-				api_url: ""}, nil
+				name:     strings.Replace(sshregexres[0][3], ".git", "", -1),
+				desc:     "",
+				author:   sshregexres[0][2],
+				base_url: sshregexres[0][1],
+				url:      sshregexres[0][0],
+				api_url:  ""}, nil
 
 		}
 
@@ -94,11 +94,12 @@ func getRepository(dir string) (*TRepository, error) {
 		if httpregexres != nil {
 			// fuck regexes
 			return &TRepository{
-				name:    strings.Replace(httpregexres[0][3], ".git", "", -1),
-				desc:    "",
-				author:  httpregexres[0][2],
-				url:     httpregexres[0][0],
-				api_url: ""}, nil
+				name:     strings.Replace(httpregexres[0][3], ".git", "", -1),
+				desc:     "",
+				author:   httpregexres[0][2],
+				base_url: sshregexres[0][1],
+				url:      httpregexres[0][0],
+				api_url:  ""}, nil
 		}
 
 	}
@@ -141,14 +142,13 @@ func getRepositoryHost(auth *TAuthentication) TRepoHost {
 			panic(err)
 		}
 	}
-	
+
+	// Try getting information on gitlab
 	lr := new(TGitLabRepo)
 	_, err = lr.Initialize(auth, repo)
 	if err == nil {
 		return lr
 	}
-
-	// Try getting information on gitlab
 
 	panic(err)
 
