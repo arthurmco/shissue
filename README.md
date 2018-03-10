@@ -1,5 +1,7 @@
 # shissue
 
+![travis build](https://api.travis-ci.org/arthurmco/shissue.svg?branch=master)
+
 shissue (`shell issue`) is a software that allows you to manage git project issues 
 from the command line, without the need to open up a browser and go to your issue.
 
