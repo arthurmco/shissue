@@ -63,7 +63,7 @@ func (gl *TGitLabRepo) Initialize(auth *TAuthentication, repo *TRepository) (str
 func (gl *TGitLabRepo) getLabels() (map[string]string, error) {
 	// Get the label colors. For the visuals!
 	var labelColors = map[string]string{}
-	labels, _, err := gl.client.Labels.ListLabels(gl.project.ID)
+	labels, _, err := gl.client.Labels.ListLabels(gl.project.ID, nil)
 
 	if err != nil {
 		return nil, err
