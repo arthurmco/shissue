@@ -217,20 +217,35 @@ func _printIssues(ad ArgumentData, args []string) {
 	// to the terminal
 	// TODO: Check if 256 color is supported
 	// TODO: Print directly to the 24-bit color if supported
-	fnPrintBackColor := func(s string, r, g, b uint8) string {
-		// (255 / 51 = 5, the number we have to limit it to convert the
-		// number to a 256-color compatible one
-		cR, cG, cB := r/51, g/51, b/51
 
-		if cR+uint8(float32(cG)*2.5)+cB > 9 {
-			s = "\033[30m" + s
+	fnPrintBackColor := func(s string, r, g, b uint8) string { return s }
+	if os.Getenv("COLORTERM") == "truecolor" || os.Getenv("COLORTERM") == "24bit" {
+		fnPrintBackColor = func(s string, r, g, b uint8) string {
+			// (255 / 51 = 5, the number we have to limit it to convert the
+			cR, cG, cB := float32(r/51.0), float32(g/51.0), float32(b/51.0)
+
+			if cR+cG*2.5+cB > 9.0 {
+				s = "\033[30m" + s
+			}
+			return fmt.Sprintf("\033[48;2;%d;%d;%dm%s\033[0m",
+				r, g, b, s)
 		}
+	} else {
+		fnPrintBackColor = func(s string, r, g, b uint8) string {
+			// (255 / 51 = 5, the number we have to limit it to convert the
+			// number to a 256-color compatible one
+			cR, cG, cB := r/51, g/51, b/51
 
-		// taken from https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
-		cColorNum := 16 + 36*cR + 6*cG + cB
+			if cR+uint8(float32(cG)*2.5)+cB > 9 {
+				s = "\033[30m" + s
+			}
 
-		return "\033[48;5;" + strconv.Itoa(int(cColorNum)) +
-			"m" + s + "\033[0m"
+			// taken from https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
+			cColorNum := 16 + 36*cR + 6*cG + cB
+
+			return "\033[48;5;" + strconv.Itoa(int(cColorNum)) +
+				"m" + s + "\033[0m"
+		}
 	}
 
 	// If arg is a number, it might be the issue number
