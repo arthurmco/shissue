@@ -97,7 +97,7 @@ func getRepository(dir string) (*TRepository, error) {
 				name:     strings.Replace(httpregexres[0][3], ".git", "", -1),
 				desc:     "",
 				author:   httpregexres[0][2],
-				base_url: sshregexres[0][1],
+				base_url: httpregexres[0][1],
 				url:      httpregexres[0][0],
 				api_url:  ""}, nil
 		}
