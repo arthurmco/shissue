@@ -32,7 +32,9 @@ managing git issue history?
 ## Usage
 
 ```
- shissue - view github issues in command line
+> $ shissue help
+
+ shissue - view github/gitlab issues in command line
 
  Usage: shissue [options] command [commandargs...]
 
@@ -42,9 +44,11 @@ managing git issue history?
 
  Options: 
  [-U|--username] <<username>>
-	specify the username used in your github account
+	specify the username used in your repo account
  [-P|--password] <<password>>
-	specify the password used in your github account
+	specify the password used in your repo account
+ --allow-untrusted-certs
+	Allow connecting to certificates not trusted by the system
 
 ```
 
