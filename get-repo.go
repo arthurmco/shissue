@@ -59,8 +59,8 @@ func getRepository(dir string) (*TRepository, error) {
 	// Regexes to discover if we have a git or an ssh repository
 	// Doing this here so we don't be bothered to recompile again on
 	// every loop iteration
-	sshregex := regexp.MustCompile(`git@(.*):(.*)/(.*)`)
-	httpregex := regexp.MustCompile(`https://(.*)/(.*)/(.*)`)
+	sshregex := regexp.MustCompile(`git@([a-zA-Z0-9\.\-_]*):(.*)/(.*)`)
+	httpregex := regexp.MustCompile(`https://([a-zA-Z0-9\.\-_]*)/(.*)/(.*)`)
 
 	out := string(bout[:len(bout)])
 	lines := strings.Split(strings.Trim(out, "\n\t "), "\n")
