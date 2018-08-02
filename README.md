@@ -18,16 +18,13 @@ managing git issue history?
 ## Build & Install
 
  - Install the go compiler (`pacman -S go`, `apt install golang`, `yum install golang`, one of the three will do)
- - Create a folder tree named `src/github.com/arthurmco/`, or whatever 
-   namespace this project might be in. This is important, because the go build 
-   tool is... well...
- - Set the environment variable `GOPATH` to the top of that tree.
- - `git clone` this source inside that tree
+ - Set the environment variable `GOPATH` to where you want to download
+   the source
+ - Type `go get github.com/arthurmco/shissue` and wait ~and make a
+   coffee~. A folder named `github.com` will appear at
+   `GOPATH`. Browse it until you find `shissue`folder.
+ - Open the shissue folder
  - Run the build.sh script with the folder you want to install shissue as the argument (like `sh build.sh /usr/local/bin`). **Note that, for some directories, you need to run the script as root!**
- 
- Obs: I'm not a Go expert. I am angry, but it's because I need help.
- 
- Obs 2: I feel like I need to do a build script.
  
 ## Usage
 
